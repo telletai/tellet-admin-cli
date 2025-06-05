@@ -1,0 +1,38 @@
+{
+  "name": "@tellet/admin-cli",
+  "version": "2.5.1",
+  "description": "Admin tools for Tellet - auto-categorization, transcript export, media download, data export, bulk user management, and metadata management",
+  "main": "tellet-admin-tool.js",
+  "bin": {
+    "tellet-admin": "./tellet-admin-tool.js",
+    "tellet-wizard": "./tellet-wizard.js"
+  },
+  "scripts": {
+    "start": "node tellet-admin-tool.js",
+    "wizard": "node tellet-wizard.js",
+    "categorize": "node auto-categorize-project.js",
+    "start:ts": "ts-node auto-categorize-project.ts",
+    "build": "tsc auto-categorize-project.ts --outDir dist --module commonjs --target es2020",
+    "postinstall": "node -e \"console.log('\\n🎉 Tellet Admin CLI installed successfully!\\nRun \\'tellet-wizard\\' to get started.\\n')\""
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "chalk": "^4.1.2",
+    "commander": "^11.0.0",
+    "csv-parse": "^5.5.0",
+    "csv-writer": "^1.6.0",
+    "inquirer": "^8.2.6",
+    "ora": "^5.4.1"
+  },
+  "optionalDependencies": {
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
