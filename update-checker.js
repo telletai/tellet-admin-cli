@@ -6,7 +6,7 @@ const path = require('path');
 
 class GitUpdateChecker {
     constructor(config = {}) {
-        this.repoUrl = config.repoUrl || 'https://github.com/pimverbij/tellet-admin-cli';
+        this.repoUrl = config.repoUrl || 'https://github.com/telletai/tellet-admin-cli';
         this.currentVersion = this.getCurrentVersion();
         this.updateCheckFile = path.join(__dirname, '.update-check');
     }
