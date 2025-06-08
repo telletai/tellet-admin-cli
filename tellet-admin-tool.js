@@ -79,7 +79,22 @@ async function getWorkspaces(organizationId) {
   try {
     const url = API_ENDPOINTS.workspaces.replace(':organizationId', organizationId);
     const response = await api.get(url);
-    return response.data || [];
+    const data = response.data;
+    
+    // Handle the structure with privateWorkspaces and sharedWorkspaces
+    if (data && typeof data === 'object' && !Array.isArray(data)) {
+      let workspaces = [];
+      if (data.privateWorkspaces) {
+        workspaces = workspaces.concat(data.privateWorkspaces);
+      }
+      if (data.sharedWorkspaces) {
+        workspaces = workspaces.concat(data.sharedWorkspaces);
+      }
+      return workspaces;
+    }
+    
+    // Fallback if it's already an array
+    return data || [];
   } catch (error) {
     console.error('Failed to get workspaces:', error.message);
     return [];

@@ -78,9 +78,18 @@ class UsageAnalytics {
                 // Find the organization that contains this workspace
                 for (const org of allOrgs) {
                     const wsResponse = await this.api.get(`/organizations/${org._id}/workspaces`);
-                    const workspaces = wsResponse.data;
+                    const workspaceData = wsResponse.data;
                     
-                    if (workspaces.some(ws => ws._id === this.options.workspaceId)) {
+                    // Combine private and shared workspaces
+                    let allWorkspaces = [];
+                    if (workspaceData.privateWorkspaces) {
+                        allWorkspaces = allWorkspaces.concat(workspaceData.privateWorkspaces);
+                    }
+                    if (workspaceData.sharedWorkspaces) {
+                        allWorkspaces = allWorkspaces.concat(workspaceData.sharedWorkspaces);
+                    }
+                    
+                    if (allWorkspaces.some(ws => ws._id === this.options.workspaceId)) {
                         organizations = [org];
                         this.log(`Found workspace in organization: ${org.name}`);
                         break;
@@ -115,7 +124,16 @@ class UsageAnalytics {
                 // Get workspaces for this organization
                 try {
                     const wsResponse = await this.api.get(`/organizations/${org._id}/workspaces`);
-                    let workspaces = wsResponse.data;
+                    const workspaceData = wsResponse.data;
+                    
+                    // Combine private and shared workspaces
+                    let workspaces = [];
+                    if (workspaceData.privateWorkspaces) {
+                        workspaces = workspaces.concat(workspaceData.privateWorkspaces);
+                    }
+                    if (workspaceData.sharedWorkspaces) {
+                        workspaces = workspaces.concat(workspaceData.sharedWorkspaces);
+                    }
                     
                     // Filter by workspace ID if specified
                     if (this.options.workspaceId) {
