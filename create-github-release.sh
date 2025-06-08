@@ -59,9 +59,15 @@ tellet-admin update
 npm install -g git+https://github.com/telletai/tellet-admin-cli.git@latest
 \`\`\`
 
+### ✨ What's New in v$CURRENT_VERSION
+
+- Added stylized Tellet ASCII art logo to wizard banner
+- Improved wizard banner alignment and visual consistency
+- Enhanced overall user experience with better branding
+
 ### 📋 Features
 
-- 🧙 **Interactive Wizard Mode** - User-friendly guided interface
+- 🧙 **Interactive Wizard Mode** - User-friendly guided interface with branded ASCII art
 - 🤖 **Auto-categorization** - AI-powered category generation
 - 📥 **Data Export** - Export conversations and metadata
 - 🎬 **Media Download** - Download audio, video, and images
