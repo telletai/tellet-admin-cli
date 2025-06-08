@@ -66,6 +66,7 @@ npm install -g git+https://github.com/telletai/tellet-admin-cli.git@latest
 - 📥 **Data Export** - Export conversations and metadata
 - 🎬 **Media Download** - Download audio, video, and images
 - 🏥 **Health Check** - Analyze project health
+- 📊 **Usage Analytics** - Generate comprehensive usage reports for organizations, workspaces, and projects
 - 👥 **Bulk User Management** - Invite multiple users from CSV
 - 🔍 **API Testing** - Test Tellet API endpoints
 
