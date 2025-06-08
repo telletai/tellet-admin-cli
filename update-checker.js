@@ -4,7 +4,7 @@ const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-class GitUpdateChecker {
+class UpdateChecker {
     constructor(config = {}) {
         this.repoUrl = config.repoUrl || 'https://github.com/telletai/tellet-admin-cli';
         this.currentVersion = this.getCurrentVersion();
@@ -74,6 +74,7 @@ class GitUpdateChecker {
                 updateAvailable: false
             };
         } catch (error) {
+            console.error('GitHub API error:', error.message);
             // Try alternative method - check package.json from raw GitHub
             try {
                 const rawUrl = this.repoUrl.replace('https://github.com/', 'https://raw.githubusercontent.com/') + '/main/package.json';
@@ -96,6 +97,7 @@ class GitUpdateChecker {
                     updateAvailable: false
                 };
             } catch (fallbackError) {
+                console.error('Raw GitHub error:', fallbackError.message);
                 if (!silent) {
                     console.error(chalk.yellow('Unable to check for updates'));
                 }
@@ -180,4 +182,4 @@ class GitUpdateChecker {
     }
 }
 
-module.exports = GitUpdateChecker;
+module.exports = UpdateChecker;

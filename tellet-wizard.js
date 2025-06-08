@@ -39,6 +39,7 @@ const mainMenuChoices = [
   { name: '📥 Export Data', value: 'export' },
   { name: '🎬 Download Media Files', value: 'download-media' },
   { name: '🏥 Check Project Health', value: 'health-check' },
+  { name: '📊 Usage Analytics', value: 'usage-analytics' },
   { name: '👥 Bulk Invite Users', value: 'bulk-invite' },
   { name: '🏢 List Organizations & Projects', value: 'list-orgs' },
   { name: '🔍 Test API Endpoints', value: 'test-api' },
@@ -548,6 +549,110 @@ async function handleHealthCheck(credentials) {
   await executeCommand('node', args);
 }
 
+async function handleUsageAnalytics(credentials) {
+  console.log(chalk.yellow('\n📊 Usage Analytics Configuration\n'));
+  
+  const { scope } = await inquirer.prompt([
+    {
+      type: 'list',
+      name: 'scope',
+      message: 'Select analytics scope:',
+      choices: [
+        { name: 'All Organizations & Workspaces', value: 'all' },
+        { name: 'Specific Organization', value: 'organization' },
+        { name: 'Specific Workspace', value: 'workspace' }
+      ]
+    }
+  ]);
+  
+  const args = ['tellet-admin-tool.js', 'usage-analytics'];
+  
+  // Add credentials
+  if (credentials.email) {
+    args.push('--email', credentials.email);
+  }
+  if (credentials.password) {
+    args.push('--password', credentials.password);
+  }
+  
+  // Handle scope selection
+  if (scope === 'organization') {
+    const orgId = await selectOrganization(credentials);
+    if (!orgId) return;
+    args.push('-o', orgId);
+  } else if (scope === 'workspace') {
+    const orgId = await selectOrganization(credentials);
+    if (!orgId) return;
+    
+    const workspaceId = await selectWorkspace(credentials, orgId);
+    if (!workspaceId) return;
+    args.push('-w', workspaceId);
+  }
+  
+  // Date range options
+  const { useDateRange } = await inquirer.prompt([
+    {
+      type: 'confirm',
+      name: 'useDateRange',
+      message: 'Filter by date range?',
+      default: false
+    }
+  ]);
+  
+  if (useDateRange) {
+    const dateAnswers = await inquirer.prompt([
+      {
+        type: 'input',
+        name: 'startDate',
+        message: 'Start date (YYYY-MM-DD):',
+        validate: (input) => {
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(input)) {
+            return 'Please enter date in YYYY-MM-DD format';
+          }
+          return true;
+        }
+      },
+      {
+        type: 'input',
+        name: 'endDate',
+        message: 'End date (YYYY-MM-DD):',
+        default: new Date().toISOString().split('T')[0],
+        validate: (input) => {
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(input)) {
+            return 'Please enter date in YYYY-MM-DD format';
+          }
+          return true;
+        }
+      }
+    ]);
+    
+    args.push('-s', dateAnswers.startDate);
+    args.push('-e', dateAnswers.endDate);
+  }
+  
+  // Additional options
+  const { verbose, outputDir } = await inquirer.prompt([
+    {
+      type: 'confirm',
+      name: 'verbose',
+      message: 'Show detailed progress?',
+      default: true
+    },
+    {
+      type: 'input',
+      name: 'outputDir',
+      message: 'Output directory for reports:',
+      default: './analytics'
+    }
+  ]);
+  
+  if (verbose) args.push('-v');
+  args.push('--output-dir', outputDir);
+  
+  console.log(chalk.cyan('\n📊 Generating usage analytics...\n'));
+  await executeCommand('node', args);
+}
+
 async function handleBulkInvite(credentials) {
   const orgId = await selectOrganization(credentials);
   if (!orgId) return;
@@ -717,6 +822,10 @@ async function mainLoop() {
         
       case 'health-check':
         await handleHealthCheck(credentials);
+        break;
+        
+      case 'usage-analytics':
+        await handleUsageAnalytics(credentials);
         break;
         
       case 'bulk-invite':

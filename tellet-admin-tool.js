@@ -759,6 +759,63 @@ program
     }
   });
 
+// Usage analytics command
+program
+  .command('usage-analytics')
+  .description('Generate usage analytics report for organizations and workspaces')
+  .option('-o, --organization <id>', 'Specific organization ID (optional)')
+  .option('-w, --workspace <id>', 'Specific workspace ID (optional)')
+  .option('-s, --start-date <date>', 'Start date for analytics (YYYY-MM-DD)')
+  .option('-e, --end-date <date>', 'End date for analytics (YYYY-MM-DD, default: today)')
+  .option('--output-dir <path>', 'Output directory for reports (default: ./analytics)')
+  .option('-v, --verbose', 'Show detailed progress')
+  .option('--email <email>', 'Email for authentication')
+  .option('--password <password>', 'Password for authentication')
+  .option('-u, --url <url>', 'API base URL', API_BASE_URL)
+  .action(async (options) => {
+    const UsageAnalytics = require('./usage-analytics');
+    
+    try {
+      // Get credentials
+      const email = options.email || DEFAULT_EMAIL;
+      const password = options.password || DEFAULT_PASSWORD;
+      
+      if (!email || !password) {
+        console.error('Error: Email and password are required. Set TELLET_EMAIL and TELLET_PASSWORD environment variables or use --email and --password flags.');
+        process.exit(1);
+      }
+      
+      // Update API base URL if provided
+      if (options.url) {
+        api.defaults.baseURL = options.url;
+      }
+      
+      // Authenticate
+      const loginData = { email, password };
+      const loginResponse = await api.post(API_ENDPOINTS.login, loginData);
+      authToken = loginResponse.data.token;
+      
+      console.log('✅ Authentication successful');
+      
+      // Create analytics instance
+      const analytics = new UsageAnalytics(api, {
+        startDate: options.startDate,
+        endDate: options.endDate,
+        outputDir: options.outputDir,
+        verbose: options.verbose,
+        organizationId: options.organization,
+        workspaceId: options.workspace
+      });
+      
+      // Run analytics
+      await analytics.run();
+      
+    } catch (error) {
+      console.error('❌ Error:', error.response?.data?.message || error.message);
+      process.exit(1);
+    }
+  });
+
 // Interactive wizard command
 program
   .command('wizard')

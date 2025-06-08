@@ -26,14 +26,14 @@ if command -v tellet-admin &> /dev/null; then
     read -r response
     if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
         echo "📥 Updating Tellet Admin CLI..."
-        npm update -g @tellet/admin-cli
+        npm install -g git+https://github.com/telletai/tellet-admin-cli.git@latest
     else
         echo "✅ No changes made."
         exit 0
     fi
 else
     echo "📥 Installing Tellet Admin CLI..."
-    npm install -g @tellet/admin-cli
+    npm install -g git+https://github.com/telletai/tellet-admin-cli.git
 fi
 
 # Check if installation was successful
@@ -57,6 +57,6 @@ else
     echo ""
     echo "❌ Installation failed."
     echo "   You may need to run with sudo:"
-    echo "   sudo npm install -g @tellet/admin-cli"
+    echo "   sudo npm install -g git+https://github.com/telletai/tellet-admin-cli.git"
     exit 1
 fi

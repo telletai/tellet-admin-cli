@@ -9,6 +9,7 @@ A powerful command-line tool for managing Tellet projects, including automated c
 - **Data Export**: Export conversations, transcripts, and metadata in multiple formats
 - **Media Download**: Download all audio, video, and image files from conversations
 - **Health Check**: Analyze project health and identify issues
+- **Usage Analytics**: Generate usage reports for organizations and workspaces
 - **Organization Management**: List and navigate organizations, workspaces, and projects
 - **Bulk User Management**: Invite multiple users to organizations from CSV files
 - **API Testing**: Test all Tellet API endpoints
@@ -134,6 +135,7 @@ The Tellet Admin CLI provides powerful tools for:
 - 📄 **Transcript Export** - Export conversations in text format for qualitative analysis
 - 🎬 **Media Download** - Download all media files (audio, video, images) from conversations
 - 🏥 **Health Check** - Monitor project health and identify issues
+- 📊 **Usage Analytics** - Generate comprehensive usage reports for organizations and workspaces
 - 📝 **Metadata Management** - Bulk update conversation metadata (coming soon)
 - 👥 **User Management** - Bulk invite users to organizations from CSV files
 - 🔍 **Project Analysis** - Access project data and insights
@@ -194,6 +196,9 @@ node tellet-admin-tool.js download-media -p PROJECT_ID
 # Check project health
 node tellet-admin-tool.js health-check -p PROJECT_ID
 
+# Generate usage analytics
+node tellet-admin-tool.js usage-analytics
+
 # Test API endpoints
 node tellet-admin-tool.js test-api
 
@@ -249,6 +254,7 @@ node tellet-admin-tool.js wizard
 - 📥 Export Data (with submenu for different export types)
 - 🎬 Download Media Files
 - 🏥 Check Project Health
+- 📊 Usage Analytics
 - 👥 Bulk Invite Users
 - 🏢 List Organizations & Projects
 - 🔍 Test API Endpoints
@@ -549,6 +555,102 @@ node tellet-admin-tool.js download-media -p PROJECT_ID -c CONVERSATION_ID
 Download only from completed conversations:
 ```bash
 node tellet-admin-tool.js download-media -p PROJECT_ID -s digested
+```
+
+### 📊 Usage Analytics
+
+Generate comprehensive usage reports for organizations and workspaces with detailed metrics.
+
+```bash
+node tellet-admin-tool.js usage-analytics
+```
+
+**Options:**
+- `-o, --organization <id>` - Specific organization ID (optional)
+- `-w, --workspace <id>` - Specific workspace ID (optional)
+- `-s, --start-date <date>` - Start date for analytics (YYYY-MM-DD)
+- `-e, --end-date <date>` - End date for analytics (YYYY-MM-DD, default: today)
+- `--output-dir <path>` - Output directory for reports (default: ./analytics)
+- `-v, --verbose` - Show detailed progress
+- `--email <email>` - Email for authentication (optional if using env vars)
+- `--password <password>` - Password for authentication (optional if using env vars)
+- `-u, --url <url>` - API base URL
+
+**What it collects:**
+- Total number of organizations, workspaces, and projects
+- Total conversations and digested conversations per project
+- Completion rates for each project/workspace/organization
+- Total interview questions and questions with probing
+- Project status and activity dates
+
+**Output formats:**
+1. **Organization Summary CSV** - High-level metrics per organization
+2. **Workspace Summary CSV** - Detailed metrics per workspace
+3. **Project Details CSV** - Granular data for each project
+4. **JSON Report** - Complete data structure for custom analysis
+
+**Examples:**
+
+Generate analytics for all organizations:
+```bash
+node tellet-admin-tool.js usage-analytics
+```
+
+Generate analytics for a specific date range:
+```bash
+node tellet-admin-tool.js usage-analytics \
+  -s 2025-01-01 \
+  -e 2025-06-30 \
+  --output-dir ./q2-analytics
+```
+
+Generate analytics for a specific organization:
+```bash
+node tellet-admin-tool.js usage-analytics \
+  -o ORGANIZATION_ID \
+  -v
+```
+
+Generate analytics for a specific workspace:
+```bash
+node tellet-admin-tool.js usage-analytics \
+  -w WORKSPACE_ID \
+  -v
+```
+
+Combine filters - organization with date range:
+```bash
+node tellet-admin-tool.js usage-analytics \
+  -o ORGANIZATION_ID \
+  -s 2025-01-01 \
+  -e 2025-06-30 \
+  --output-dir ./q1-org-analytics
+```
+
+**Sample output:**
+```
+📊 Usage Analytics Summary
+════════════════════════════════════════════════════════════
+Organizations:           3
+Workspaces:              8
+Projects:                45
+Total Conversations:     1,234
+Digested Conversations:  1,102
+Completion Rate:         89.3%
+Total Questions:         456
+With Probing:            789
+════════════════════════════════════════════════════════════
+
+🏆 Top Organizations by Conversations:
+   1. Acme Corp: 567 conversations
+   2. TechStart Inc: 432 conversations
+   3. Global Research: 235 conversations
+
+📄 Reports generated:
+   • Organization Summary: ./analytics/organization_usage_summary_all_time_2025-06-07.csv
+   • Workspace Summary: ./analytics/workspace_usage_summary_all_time_2025-06-07.csv
+   • Project Details: ./analytics/project_usage_details_all_time_2025-06-07.csv
+   • Full JSON Report: ./analytics/usage_analytics_all_time_2025-06-07.json
 ```
 
 ### 📝 Update Metadata from CSV

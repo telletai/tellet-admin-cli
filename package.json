@@ -1,5 +1,5 @@
 {
-  "name": "@tellet/admin-cli",
+  "name": "tellet-admin-cli",
   "version": "2.5.1",
   "description": "Admin tools for Tellet - auto-categorization, transcript export, media download, data export, bulk user management, and metadata management",
   "main": "tellet-admin-tool.js",
@@ -34,5 +34,14 @@
   },
   "engines": {
     "node": ">=14.0.0"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/telletai/tellet-admin-cli.git"
+  },
+  "homepage": "https://github.com/telletai/tellet-admin-cli#readme",
+  "bugs": {
+    "url": "https://github.com/telletai/tellet-admin-cli/issues"
+  },
+  "private": false
 }
