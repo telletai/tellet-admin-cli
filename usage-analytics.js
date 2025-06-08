@@ -241,24 +241,27 @@ class UsageAnalytics {
                 const questionsResponse = await this.api.get(
                     `/analyzer/results/${project._id}/interview_questions`
                 );
-                const questions = questionsResponse.data.interviewQuestions || [];
+                
+                // API returns questions directly as an array
+                const questions = Array.isArray(questionsResponse.data) ? questionsResponse.data : [];
                 
                 projectStats.questions = questions.length;
                 
-                // Count questions with probing (questions that have follow-up questions)
-                let probingCount = 0;
+                // Count total questions including probing questions
+                let totalQuestionCount = 0;
                 for (const question of questions) {
-                    // Check if question has probing questions
-                    if (question.probingQuestions && question.probingQuestions.length > 0) {
-                        probingCount += 1 + question.probingQuestions.length;
-                    } else {
-                        probingCount += 1;
+                    // Count the main question
+                    totalQuestionCount++;
+                    
+                    // Check if question has probing questions and count them
+                    if (question.probingQuestions && Array.isArray(question.probingQuestions)) {
+                        totalQuestionCount += question.probingQuestions.length;
                     }
                 }
-                projectStats.questionsWithProbing = probingCount;
+                projectStats.questionsWithProbing = totalQuestionCount;
                 
             } catch (error) {
-                this.log(`Failed to get questions for ${project.name}: ${error.message}`, 'error');
+                this.log(`Failed to get questions for ${projectName}: ${error.message}`, 'error');
             }
             
         } catch (error) {
