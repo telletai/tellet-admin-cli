@@ -61,10 +61,11 @@ npm install -g git+https://github.com/telletai/tellet-admin-cli.git@latest
 
 ### ✨ What's New in v$CURRENT_VERSION
 
-- Complete fix for usage analytics workspace handling
-- Support both 'priv'/'shared' and 'privateWorkspaces'/'sharedWorkspaces' API keys
-- Fix project name display in analytics reports
-- Successfully tested with large organizations like Kantar Nederland
+- Major performance improvement for organization/project selection
+- Wizard no longer hangs when fetching organizations
+- Added fast selection mode that only loads data when needed
+- Reduced API calls by implementing lazy loading
+- Added --fast flag to list-orgs command for quick listing
 
 ### 📋 Features
 
