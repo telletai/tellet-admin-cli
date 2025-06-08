@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [2.7.1] - 2024-01-08
+## [2.7.2] - 2024-01-08
 
 ### Added
 - Production readiness infrastructure with modular architecture

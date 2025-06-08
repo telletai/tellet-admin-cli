@@ -1,6 +1,6 @@
-# Release Notes for v2.7.1
+# Release Notes for v2.7.2
 
-## What's New in v2.7.1
+## What's New in v2.7.2
 
 ### Major Features
 - **Production-Ready Architecture**: Complete refactoring of the codebase into a modular architecture
@@ -32,7 +32,7 @@
 ## Installation
 
 ```bash
-npm install -g git+https://github.com/telletai/tellet-admin-cli.git@v2.7.1
+npm install -g git+https://github.com/telletai/tellet-admin-cli.git@v2.7.2
 ```
 
 ## Upgrade from Previous Version
@@ -44,7 +44,7 @@ If you're upgrading from v2.5.x or earlier:
 npm uninstall -g tellet-admin-cli
 
 # Install new version
-npm install -g git+https://github.com/telletai/tellet-admin-cli.git@v2.7.1
+npm install -g git+https://github.com/telletai/tellet-admin-cli.git@v2.7.2
 ```
 
 ## Breaking Changes

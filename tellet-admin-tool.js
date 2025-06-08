@@ -416,7 +416,7 @@ async function updateConversationMetadata(projectId, csvPath, matchField, option
 program
   .name('tellet-admin-tool')
   .description('Tellet Admin Tool - Manage categories, export data, transcripts, download media, and update metadata')
-  .version('2.7.1');
+  .version('2.7.2');
 
 // Auto-categorize command
 program
