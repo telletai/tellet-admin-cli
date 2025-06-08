@@ -245,20 +245,27 @@ class UsageAnalytics {
                 // API returns questions directly as an array
                 const questions = Array.isArray(questionsResponse.data) ? questionsResponse.data : [];
                 
-                projectStats.questions = questions.length;
+                // Count base questions (just the main questions, no probing)
+                const baseQuestionCount = questions.length;
                 
-                // Count total questions including probing questions
-                let totalQuestionCount = 0;
+                // Count total questions per conversation (main + probing)
+                let questionsPerConversation = 0;
                 for (const question of questions) {
                     // Count the main question
-                    totalQuestionCount++;
+                    questionsPerConversation++;
                     
-                    // Check if question has probing questions and count them
+                    // Add probing questions if they exist
                     if (question.probingQuestions && Array.isArray(question.probingQuestions)) {
-                        totalQuestionCount += question.probingQuestions.length;
+                        questionsPerConversation += question.probingQuestions.length;
                     }
                 }
-                projectStats.questionsWithProbing = totalQuestionCount;
+                
+                // Calculate total questions across all conversations
+                // Total Questions = base questions × number of conversations
+                projectStats.questions = baseQuestionCount * filteredConversations.length;
+                
+                // Questions with Probing = total questions per conversation × number of conversations
+                projectStats.questionsWithProbing = questionsPerConversation * filteredConversations.length;
                 
             } catch (error) {
                 this.log(`Failed to get questions for ${projectName}: ${error.message}`, 'error');
@@ -368,8 +375,8 @@ class UsageAnalytics {
                 { id: 'totalConversations', title: 'Total Conversations' },
                 { id: 'totalDigestedConversations', title: 'Digested Conversations' },
                 { id: 'completionRate', title: 'Completion Rate (%)' },
-                { id: 'totalQuestions', title: 'Total Questions' },
-                { id: 'totalQuestionsWithProbing', title: 'Questions with Probing' }
+                { id: 'totalQuestions', title: 'Total Questions Asked' },
+                { id: 'totalQuestionsWithProbing', title: 'Total Questions (incl. Probing)' }
             ]
         });
         
@@ -398,8 +405,8 @@ class UsageAnalytics {
                 { id: 'totalConversations', title: 'Total Conversations' },
                 { id: 'totalDigestedConversations', title: 'Digested Conversations' },
                 { id: 'completionRate', title: 'Completion Rate (%)' },
-                { id: 'totalQuestions', title: 'Total Questions' },
-                { id: 'totalQuestionsWithProbing', title: 'Questions with Probing' }
+                { id: 'totalQuestions', title: 'Total Questions Asked' },
+                { id: 'totalQuestionsWithProbing', title: 'Total Questions (incl. Probing)' }
             ]
         });
         
@@ -429,8 +436,8 @@ class UsageAnalytics {
                 { id: 'conversations', title: 'Total Conversations' },
                 { id: 'digestedConversations', title: 'Digested Conversations' },
                 { id: 'completionRate', title: 'Completion Rate (%)' },
-                { id: 'questions', title: 'Total Questions' },
-                { id: 'questionsWithProbing', title: 'Questions with Probing' },
+                { id: 'questions', title: 'Total Questions Asked' },
+                { id: 'questionsWithProbing', title: 'Total Questions (incl. Probing)' },
                 { id: 'createdAt', title: 'Created' },
                 { id: 'updatedAt', title: 'Last Updated' }
             ]
@@ -489,8 +496,8 @@ class UsageAnalytics {
             '0.0';
         console.log(chalk.white(`Completion Rate:         ${chalk.bold(completionRate + '%')}`));
         
-        console.log(chalk.white(`Total Questions:         ${chalk.bold(this.stats.summary.totalQuestions)}`));
-        console.log(chalk.white(`With Probing:            ${chalk.bold(this.stats.summary.totalQuestionsWithProbing)}`));
+        console.log(chalk.white(`Total Questions Asked:   ${chalk.bold(this.stats.summary.totalQuestions)}`));
+        console.log(chalk.white(`Including Probing:       ${chalk.bold(this.stats.summary.totalQuestionsWithProbing)}`));
         
         console.log(chalk.blue('═'.repeat(60)) + '\n');
         
