@@ -262,12 +262,15 @@ function writeFileAsync(outputPath, writeFunction) {
 }
 
 // Function to export data split by question for a single project
-async function exportByQuestion(api, projectId, conversations, questionsMap, outputDir) {
+async function exportByQuestion(api, projectId, conversations, questionsMap, outputDir, createExportDirFn) {
     const { questionGroups, unrelatedMessages } = groupMessagesByQuestion(conversations, questionsMap);
     
-    // Create project-specific subdirectory
-    const projectOutputDir = path.join(outputDir, projectId);
-    if (!fs.existsSync(projectOutputDir)) {
+    // Create export directory with proper hierarchy
+    const projectOutputDir = createExportDirFn ? 
+        await createExportDirFn(projectId, outputDir) : 
+        path.join(outputDir, projectId);
+    
+    if (!createExportDirFn && !fs.existsSync(projectOutputDir)) {
         fs.mkdirSync(projectOutputDir, { recursive: true });
     }
     
@@ -366,10 +369,13 @@ async function exportByQuestion(api, projectId, conversations, questionsMap, out
 }
 
 // Single file export function
-async function exportSingleFile(conversationsList, projectId, outputDir) {
-    // Create project-specific subdirectory
-    const projectOutputDir = path.join(outputDir, projectId);
-    if (!fs.existsSync(projectOutputDir)) {
+async function exportSingleFile(conversationsList, projectId, outputDir, createExportDirFn) {
+    // Create export directory with proper hierarchy
+    const projectOutputDir = createExportDirFn ? 
+        await createExportDirFn(projectId, outputDir) : 
+        path.join(outputDir, projectId);
+    
+    if (!createExportDirFn && !fs.existsSync(projectOutputDir)) {
         fs.mkdirSync(projectOutputDir, { recursive: true });
     }
     
@@ -498,7 +504,7 @@ async function exportSingleFile(conversationsList, projectId, outputDir) {
 }
 
 // Process a single project
-async function processProject(api, projectId, options) {
+async function processProject(api, projectId, options, createExportDirFn) {
     try {
         // Verify project exists by trying to get its info
         console.log(`📂 Processing project: ${projectId}`);
@@ -539,15 +545,15 @@ async function processProject(api, projectId, options) {
             
             if (Object.keys(questionsMap).length === 0) {
                 console.log(`ℹ️  No questions found for project ${projectId}, falling back to single file export`);
-                await exportSingleFile(detailedConversations, projectId, options.outputDir);
+                await exportSingleFile(detailedConversations, projectId, options.outputDir, createExportDirFn);
             } else {
                 console.log(`✅ Found ${Object.keys(questionsMap).length} questions for project ${projectId}`);
-                await exportByQuestion(api, projectId, detailedConversations, questionsMap, options.outputDir);
+                await exportByQuestion(api, projectId, detailedConversations, questionsMap, options.outputDir, createExportDirFn);
                 console.log(`✅ Export by question complete for project ${projectId}!`);
             }
         } else {
             // Single file export for this project
-            await exportSingleFile(detailedConversations, projectId, options.outputDir);
+            await exportSingleFile(detailedConversations, projectId, options.outputDir, createExportDirFn);
         }
         
         console.log(`✅ Successfully completed export for project ${projectId}`);
@@ -562,7 +568,7 @@ async function processProject(api, projectId, options) {
 }
 
 // Main export function
-async function exportTranscripts(api, options) {
+async function exportTranscripts(api, options, createExportDirFn) {
     try {
         // Create the output directory if it doesn't exist
         if (!fs.existsSync(options.outputDir)) {
@@ -624,7 +630,7 @@ async function exportTranscripts(api, options) {
             console.log(`Processing project ${i + 1} of ${allProjectIds.length}: ${projectId}`);
             console.log(`${'-'.repeat(60)}`);
             
-            await processProject(api, projectId, options);
+            await processProject(api, projectId, options, createExportDirFn);
         }
         
         console.log(`\n${'='.repeat(60)}`);

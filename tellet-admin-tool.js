@@ -100,6 +100,63 @@ async function getProjects(organizationId, workspaceId) {
   }
 }
 
+// Find project in organization hierarchy
+async function findProjectInOrganizations(projectId) {
+  try {
+    const organizations = await getOrganizations();
+    
+    for (const org of organizations) {
+      const workspaces = await getWorkspaces(org._id);
+      
+      for (const workspace of workspaces) {
+        const projects = await getProjects(org._id, workspace._id);
+        
+        const project = projects.find(p => p._id === projectId);
+        if (project) {
+          return {
+            organization: org,
+            workspace: workspace,
+            project: project
+          };
+        }
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Failed to find project in organizations:', error.message);
+    return null;
+  }
+}
+
+// Create export directory with proper hierarchy
+async function createExportDirectory(projectId, baseOutputDir) {
+  // Try to find the project in the organization hierarchy
+  const hierarchy = await findProjectInOrganizations(projectId);
+  
+  let exportPath;
+  if (hierarchy) {
+    // Use actual organization and workspace IDs
+    exportPath = path.join(
+      baseOutputDir,
+      hierarchy.organization._id,
+      hierarchy.workspace._id,
+      projectId
+    );
+  } else {
+    // Fallback to project ID only if hierarchy not found
+    console.log('⚠️  Could not determine organization/workspace hierarchy. Using project ID only.');
+    exportPath = path.join(baseOutputDir, 'unknown_org', 'unknown_workspace', projectId);
+  }
+  
+  // Create directory if it doesn't exist
+  if (!fs.existsSync(exportPath)) {
+    fs.mkdirSync(exportPath, { recursive: true });
+  }
+  
+  return exportPath;
+}
+
 // Validate that credentials are provided
 function validateCredentials(options) {
   if (!options.email || !options.password) {
@@ -145,11 +202,8 @@ async function exportConversations(projectId, outputDir, options) {
   try {
     console.log(`📥 Exporting conversations for project ${projectId}...`);
     
-    // Create project-specific subdirectory
-    const projectOutputDir = path.join(outputDir, projectId);
-    if (!fs.existsSync(projectOutputDir)) {
-      fs.mkdirSync(projectOutputDir, { recursive: true });
-    }
+    // Create export directory with proper hierarchy
+    const projectOutputDir = await createExportDirectory(projectId, outputDir);
     
     // Use the export all endpoint
     const response = await api.get(`${API_ENDPOINTS.exportAllConversations}/${projectId}`, {
@@ -172,11 +226,8 @@ async function exportConversationOverview(projectId, status, outputDir, options)
   try {
     console.log(`📊 Exporting conversation overview...`);
     
-    // Create project-specific subdirectory
-    const projectOutputDir = path.join(outputDir, projectId);
-    if (!fs.existsSync(projectOutputDir)) {
-      fs.mkdirSync(projectOutputDir, { recursive: true });
-    }
+    // Create export directory with proper hierarchy
+    const projectOutputDir = await createExportDirectory(projectId, outputDir);
     
     // Use the export endpoint which includes all conversations
     const response = await api.get(`${API_ENDPOINTS.exportOverview}/${projectId}`, {
@@ -477,7 +528,7 @@ program
         includeUnrelatedMessages: options.includeUnrelated,
         delay: options.delay,
         continueOnError: options.continueOnError
-      });
+      }, createExportDirectory);
       
       console.log(`\n✅ Export completed! Check the ${options.outputDir} directory for your transcripts.`);
       process.exit(0);

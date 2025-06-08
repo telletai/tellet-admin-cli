@@ -1,0 +1,25 @@
+{
+  "organizations": {
+    "66168d9108f858fc588457e0": {
+      "id": "66168d9108f858fc588457e0",
+      "name": "Kantar Nederland",
+      "workspaces": [],
+      "totalProjects": 0,
+      "totalConversations": 0,
+      "totalDigestedConversations": 0,
+      "totalQuestions": 0,
+      "totalQuestionsWithProbing": 0
+    }
+  },
+  "workspaces": {},
+  "projects": {},
+  "summary": {
+    "totalOrganizations": 1,
+    "totalWorkspaces": 0,
+    "totalProjects": 0,
+    "totalConversations": 0,
+    "totalDigestedConversations": 0,
+    "totalQuestions": 0,
+    "totalQuestionsWithProbing": 0
+  }
+}
