@@ -41,8 +41,8 @@ ${chalk.cyan(`    @@@@                 @@@@  @@@@                 @@@@
      @@@@@@@@ @@@@@@@    @@@@  @@@@     @@@@@@       @@@@@@@`)}
 
 ${chalk.cyan('╔═══════════════════════════════════════════════════════════╗')}
-${chalk.cyan('║')}                ${chalk.bold.white('TELLET ADMIN TOOL WIZARD')}                ${chalk.cyan('║')}
-${chalk.cyan('║')}                  ${chalk.gray('Interactive CLI v2.7.1')}                  ${chalk.cyan('║')}
+${chalk.cyan('║')}                  ${chalk.bold.white('TELLET ADMIN TOOL WIZARD')}                 ${chalk.cyan('║')}
+${chalk.cyan('║')}                   ${chalk.gray('Interactive CLI v2.7.1')}                  ${chalk.cyan('║')}
 ${chalk.cyan('╚═══════════════════════════════════════════════════════════╝')}
 `;
 

@@ -126,7 +126,18 @@ describe('Input Validation', () => {
         return null;
       }
 
-      // Check for absolute paths (security risk)
+      // Check for system paths
+      const lowerPath = normalized.toLowerCase();
+      if (lowerPath.includes('windows') && lowerPath.includes('system32')) {
+        return null;
+      }
+      
+      // Check for Unix system paths
+      if (normalized.startsWith('/etc/') || normalized === '/etc/passwd') {
+        return null;
+      }
+
+      // Check for absolute paths outside current directory
       if (path.isAbsolute(normalized) && !normalized.startsWith(process.cwd())) {
         return null;
       }

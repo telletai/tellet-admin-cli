@@ -14,9 +14,19 @@ jest.mock('ora', () => {
   });
 });
 
+// Mock csv-writer
+jest.mock('csv-writer', () => ({
+  createObjectCsvWriter: jest.fn(() => ({
+    writeRecords: jest.fn().mockResolvedValue()
+  }))
+}));
+
 describe('UsageAnalytics', () => {
   let mockApi;
   let analytics;
+  
+  // Store original Date for restoration
+  const RealDate = Date;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -64,18 +74,28 @@ describe('UsageAnalytics', () => {
     });
 
     it('should correctly filter dates within range', () => {
-      analytics.options.startDate = '2025-01-01';
-      analytics.options.endDate = '2025-12-31';
+      // Create a new instance with date range
+      const analyticsWithDates = new UsageAnalytics(mockApi, {
+        startDate: '2025-01-01',
+        endDate: '2025-12-31',
+        outputDir: './test-analytics'
+      });
 
-      expect(analytics.isWithinDateRange('2025-06-01')).toBe(true);
-      expect(analytics.isWithinDateRange('2024-12-31')).toBe(false);
-      expect(analytics.isWithinDateRange('2026-01-01')).toBe(false);
+      expect(analyticsWithDates.isWithinDateRange('2025-06-01')).toBe(true);
+      expect(analyticsWithDates.isWithinDateRange('2024-12-31')).toBe(false);
+      expect(analyticsWithDates.isWithinDateRange('2026-01-01')).toBe(false);
     });
 
     it('should handle invalid date strings', () => {
-      analytics.options.startDate = '2025-01-01';
+      const analyticsWithDates = new UsageAnalytics(mockApi, {
+        startDate: '2025-01-01',
+        endDate: '2025-12-31',
+        outputDir: './test-analytics'
+      });
       
-      expect(analytics.isWithinDateRange('invalid-date')).toBe(false);
+      // Invalid date strings should create invalid Date objects
+      const result = analyticsWithDates.isWithinDateRange('invalid-date');
+      expect(result).toBe(false);
     });
   });
 
@@ -245,12 +265,41 @@ describe('UsageAnalytics', () => {
     });
 
     it('should filter conversations by date range', async () => {
-      analytics.options.startDate = '2025-03-01';
-      analytics.options.endDate = '2025-03-31';
+      // Create analytics instance with date range
+      const analyticsWithDateRange = new UsageAnalytics(mockApi, {
+        startDate: '2025-03-01',
+        endDate: '2025-03-31',
+        outputDir: './test-analytics'
+      });
+      
+      // Initialize required parent structures
+      analyticsWithDateRange.stats.organizations['org1'] = {
+        id: 'org1',
+        name: 'Test Org',
+        workspaces: ['ws1'],
+        totalProjects: 0,
+        totalConversations: 0,
+        totalDigestedConversations: 0,
+        totalQuestions: 0,
+        totalQuestionsWithProbing: 0
+      };
 
-      await analytics.collectProjectStats('org1', 'ws1', mockProject);
+      analyticsWithDateRange.stats.workspaces['ws1'] = {
+        id: 'ws1',
+        name: 'Test Workspace',
+        organizationId: 'org1',
+        organizationName: 'Test Org',
+        projects: [],
+        totalProjects: 0,
+        totalConversations: 0,
+        totalDigestedConversations: 0,
+        totalQuestions: 0,
+        totalQuestionsWithProbing: 0
+      };
 
-      const projectStats = analytics.stats.projects['proj1'];
+      await analyticsWithDateRange.collectProjectStats('org1', 'ws1', mockProject);
+
+      const projectStats = analyticsWithDateRange.stats.projects['proj1'];
       expect(projectStats.conversations).toBe(1); // Only conv2 is in range
       expect(projectStats.digestedConversations).toBe(1);
     });
@@ -260,13 +309,6 @@ describe('UsageAnalytics', () => {
     beforeEach(() => {
       fs.mkdir = jest.fn().mockResolvedValue();
       fs.writeFile = jest.fn().mockResolvedValue();
-      
-      // Mock CSV writer
-      jest.mock('csv-writer', () => ({
-        createObjectCsvWriter: jest.fn(() => ({
-          writeRecords: jest.fn().mockResolvedValue()
-        }))
-      }));
 
       // Set up some test data
       analytics.stats = {
