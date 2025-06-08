@@ -39,10 +39,10 @@ ${chalk.cyan(`    @@@@                 @@@@  @@@@                 @@@@
     @@@@@@@@@@@@@@@@@@@@ @@@@  @@@@   @@@@@@@@@@    @@@@@@@@
      @@@@@@@@ @@@@@@@    @@@@  @@@@     @@@@@@       @@@@@@@`)}
 
-${chalk.cyan('╔════════════════════════════════════════════╗')}
-${chalk.cyan('║')}       ${chalk.bold.white('TELLET ADMIN TOOL WIZARD')}        ${chalk.cyan('║')}
-${chalk.cyan('║')}         ${chalk.gray('Interactive CLI v2.6.0')}          ${chalk.cyan('║')}
-${chalk.cyan('╚════════════════════════════════════════════╝')}
+${chalk.cyan('╔═══════════════════════════════════════════════════════════╗')}
+${chalk.cyan('║')}                ${chalk.bold.white('TELLET ADMIN TOOL WIZARD')}                 ${chalk.cyan('║')}
+${chalk.cyan('║')}                  ${chalk.gray('Interactive CLI v2.6.0')}                   ${chalk.cyan('║')}
+${chalk.cyan('╚═══════════════════════════════════════════════════════════╝')}
 `;
 
 // Main menu options
