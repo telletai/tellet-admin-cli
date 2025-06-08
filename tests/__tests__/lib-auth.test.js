@@ -4,6 +4,7 @@ const inquirer = require('inquirer');
 const fs = require('fs').promises;
 const path = require('path');
 const os = require('os');
+const axios = require('axios');
 
 // Mock dependencies
 jest.mock('inquirer');
@@ -12,8 +13,27 @@ jest.mock('fs', () => ({
     mkdir: jest.fn(),
     readFile: jest.fn(),
     writeFile: jest.fn(),
-    access: jest.fn()
+    access: jest.fn(),
+    unlink: jest.fn(),
+    chmod: jest.fn()
   }
+}));
+
+// Create a mock axios instance
+const mockAxiosInstance = {
+  post: jest.fn(),
+  get: jest.fn(),
+  put: jest.fn(),
+  delete: jest.fn(),
+  defaults: { headers: { common: {} } },
+  interceptors: {
+    response: { use: jest.fn() }
+  }
+};
+
+jest.mock('axios', () => ({
+  create: jest.fn(() => mockAxiosInstance),
+  post: jest.fn()
 }));
 
 describe('AuthManager', () => {
@@ -22,8 +42,14 @@ describe('AuthManager', () => {
   
   beforeEach(() => {
     jest.clearAllMocks();
-    authManager = new AuthManager();
     process.env = {};
+    
+    // Clear mock implementations
+    mockAxiosInstance.post.mockClear();
+    mockAxiosInstance.get.mockClear();
+    
+    // Create new authManager instance which will use the mocked axios
+    authManager = new AuthManager();
   });
 
   describe('constructor', () => {
@@ -94,16 +120,16 @@ describe('AuthManager', () => {
 
   describe('login', () => {
     it('should login successfully', async () => {
-      authManager.api = { 
-        post: jest.fn().mockResolvedValue({
-          data: { token: mockToken }
-        })
-      };
+      mockAxiosInstance.post.mockResolvedValue({
+        data: { token: mockToken }
+      });
       fs.writeFile.mockResolvedValue();
+      fs.mkdir.mockResolvedValue();
+      fs.chmod.mockResolvedValue();
       
       const result = await authManager.login('test@example.com', 'password');
       
-      expect(authManager.api.post).toHaveBeenCalledWith(
+      expect(mockAxiosInstance.post).toHaveBeenCalledWith(
         '/users/login',
         { email: 'test@example.com', password: 'password' }
       );
@@ -111,11 +137,13 @@ describe('AuthManager', () => {
     });
 
     it('should handle login errors', async () => {
-      authManager.api = { 
-        post: jest.fn().mockRejectedValue({ 
-          response: { status: 401 } 
-        })
-      };
+      mockAxiosInstance.post.mockRejectedValue({ 
+        response: { 
+          status: 401,
+          data: { message: 'Unauthorized' }
+        },
+        message: 'Request failed with status code 401'
+      });
       
       await expect(authManager.login('test@example.com', 'wrong'))
         .rejects.toThrow('Invalid email or password');
@@ -138,7 +166,8 @@ describe('AuthManager', () => {
     });
 
     it('should return null if cache file does not exist', async () => {
-      fs.access.mockRejectedValue(new Error('ENOENT'));
+      fs.access.mockRejectedValueOnce(new Error('ENOENT'));
+      fs.readFile.mockRejectedValueOnce(new Error('ENOENT'));
       
       const result = await authManager.loadTokenCache();
       
@@ -163,13 +192,12 @@ describe('AuthManager', () => {
 
   describe('clearTokenCache', () => {
     it('should clear the token cache', async () => {
-      fs.writeFile.mockResolvedValue();
+      fs.unlink.mockResolvedValue();
       
       await authManager.clearTokenCache();
       
-      expect(fs.writeFile).toHaveBeenCalledWith(
-        expect.stringContaining('auth.json'),
-        JSON.stringify({})
+      expect(fs.unlink).toHaveBeenCalledWith(
+        expect.stringContaining('auth.json')
       );
     });
   });
@@ -177,50 +205,56 @@ describe('AuthManager', () => {
 
 describe('requireAuth', () => {
   it('should wrap async function with authentication', async () => {
-    const mockApi = { 
-      post: jest.fn().mockResolvedValue({ data: { token: mockToken } }),
-      defaults: { headers: { common: {} } }
-    };
+    const mockToken = 'test-token';
     
-    // Mock the createAuthManager function
-    jest.doMock('../../lib/auth', () => ({
-      ...jest.requireActual('../../lib/auth'),
-      createAuthManager: () => ({
-        getAuthenticatedClient: jest.fn().mockResolvedValue(mockApi)
-      })
-    }));
+    // Mock successful login
+    mockAxiosInstance.post.mockResolvedValue({ 
+      data: { token: mockToken } 
+    });
     
-    const { requireAuth } = require('../../lib/auth');
+    // Don't use cache
+    fs.access.mockRejectedValue(new Error('ENOENT'));
+    fs.mkdir.mockResolvedValue();
+    fs.writeFile.mockResolvedValue();
+    fs.chmod.mockResolvedValue();
+    
     const mockHandler = jest.fn().mockResolvedValue('result');
     const wrapped = requireAuth(mockHandler);
     
-    const result = await wrapped({ email: 'test@example.com' });
+    const result = await wrapped({ 
+      email: 'test@example.com', 
+      password: 'password123' 
+    });
     
     expect(mockHandler).toHaveBeenCalledWith(
       expect.objectContaining({ 
         email: 'test@example.com',
-        api: mockApi
+        password: 'password123',
+        api: expect.any(Object)
       }),
-      expect.any(Object)
+      expect.any(Object)  // authManager
     );
     expect(result).toBe('result');
   });
 
   it('should handle authentication errors', async () => {
-    jest.doMock('../../lib/auth', () => ({
-      ...jest.requireActual('../../lib/auth'),
-      createAuthManager: () => ({
-        getAuthenticatedClient: jest.fn().mockRejectedValue(
-          new AuthenticationError('Invalid credentials')
-        )
-      })
-    }));
+    // Mock failed login
+    mockAxiosInstance.post.mockRejectedValue({ 
+      response: { 
+        status: 401,
+        data: { message: 'Unauthorized' }
+      },
+      message: 'Request failed with status code 401'
+    });
+    fs.access.mockRejectedValue(new Error('ENOENT'));
     
-    const { requireAuth } = require('../../lib/auth');
     const mockHandler = jest.fn();
     const wrapped = requireAuth(mockHandler);
     
-    await expect(wrapped({})).rejects.toThrow('Invalid credentials');
+    await expect(wrapped({
+      email: 'test@example.com',
+      password: 'wrong'
+    })).rejects.toThrow('Invalid email or password');
     expect(mockHandler).not.toHaveBeenCalled();
   });
 });

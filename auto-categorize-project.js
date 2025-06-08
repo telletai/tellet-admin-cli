@@ -1,5 +1,15 @@
 #!/usr/bin/env node
 
+/**
+ * STANDALONE SCRIPT: Auto-categorize project
+ * 
+ * This is a standalone executable script that implements its own authentication
+ * and API handling. It is intentionally separate from the main CLI architecture
+ * to allow it to be run independently without the full CLI framework.
+ * 
+ * For the integrated CLI version, use: tellet-admin categorize
+ */
+
 const axios = require('axios');
 const { program } = require('commander');
 

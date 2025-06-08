@@ -1,4 +1,3 @@
-const axios = require('axios');
 const chalk = require('chalk');
 const ora = require('ora');
 const fs = require('fs').promises;

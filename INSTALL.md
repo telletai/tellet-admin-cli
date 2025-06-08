@@ -1,15 +1,20 @@
 # Installing Tellet Admin CLI
 
-## For Team Members
+## Installation
 
-Install the Tellet Admin CLI directly from our Git repository:
+Install the Tellet Admin CLI from npm:
 
 ```bash
 # Install globally (recommended)
-npm install -g git+https://github.com/telletai/tellet-admin-cli.git
+npm install -g @tellet/admin-cli
 
 # Or install a specific version
-npm install -g git+https://github.com/telletai/tellet-admin-cli.git#v2.5.1
+npm install -g @tellet/admin-cli@3.0.0
+```
+
+For development or latest features from GitHub:
+```bash
+npm install -g git+https://github.com/telletai/tellet-admin-cli.git
 ```
 
 ## Updating

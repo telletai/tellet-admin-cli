@@ -42,7 +42,7 @@ ${chalk.cyan(`    @@@@                 @@@@  @@@@                 @@@@
 
 ${chalk.cyan('╔═══════════════════════════════════════════════════════════╗')}
 ${chalk.cyan('║')}                  ${chalk.bold.white('TELLET ADMIN TOOL WIZARD')}                 ${chalk.cyan('║')}
-${chalk.cyan('║')}                   ${chalk.gray('Interactive CLI v2.7.2')}                  ${chalk.cyan('║')}
+${chalk.cyan('║')}                   ${chalk.gray('Interactive CLI v3.0.0')}                  ${chalk.cyan('║')}
 ${chalk.cyan('╚═══════════════════════════════════════════════════════════╝')}
 `;
 
@@ -126,26 +126,25 @@ TELLET_PASSWORD=${answers.password}
 }
 
 async function selectProjectWithFlow(credentials) {
-  // Create authenticated API instance
-  const axios = require('axios');
-  const apiUrl = process.env.TELLET_API_URL || 'https://api.tellet.ai';
-  const api = axios.create({
-    baseURL: apiUrl,
-    headers: { 'Content-Type': 'application/json' }
+  // Create authenticated API instance using lib/auth
+  const { createAuthManager } = require('./lib/auth');
+  const authManager = createAuthManager({
+    baseURL: process.env.TELLET_API_URL || 'https://api.tellet.ai'
   });
   
-  // Login first
   try {
-    const loginResponse = await api.post('/users/login', {
+    const api = await authManager.getAuthenticatedClient({
       email: credentials.email,
-      password: credentials.password
+      password: credentials.password,
+      skipCache: true // Use provided credentials instead of cache
     });
-    const token = loginResponse.data.token || loginResponse.data.access_token;
-    api.defaults.headers.Authorization = `Bearer ${token}`;
+    credentials.api = api; // Store for later use
   } catch (error) {
     console.error(chalk.red('❌ Authentication failed'));
     return null;
   }
+  
+  const api = credentials.api;
   
   // Use fast selectors
   const organizations = await selectOrganizationFast(api);
@@ -293,26 +292,27 @@ async function selectProject(credentials) {
 }
 
 async function selectOrganization(credentials) {
-  // Create authenticated API instance
-  const axios = require('axios');
-  const apiUrl = process.env.TELLET_API_URL || 'https://api.tellet.ai';
-  const api = axios.create({
-    baseURL: apiUrl,
-    headers: { 'Content-Type': 'application/json' }
-  });
-  
-  // Login first
-  try {
-    const loginResponse = await api.post('/users/login', {
-      email: credentials.email,
-      password: credentials.password
+  // Get authenticated API instance
+  if (!credentials.api) {
+    const { createAuthManager } = require('./lib/auth');
+    const authManager = createAuthManager({
+      baseURL: process.env.TELLET_API_URL || 'https://api.tellet.ai'
     });
-    const token = loginResponse.data.token || loginResponse.data.access_token;
-    api.defaults.headers.Authorization = `Bearer ${token}`;
-  } catch (error) {
-    console.error(chalk.red('❌ Authentication failed'));
-    return null;
+    
+    try {
+      const api = await authManager.getAuthenticatedClient({
+        email: credentials.email,
+        password: credentials.password,
+        skipCache: true
+      });
+      credentials.api = api;
+    } catch (error) {
+      console.error(chalk.red('❌ Authentication failed'));
+      return null;
+    }
   }
+  
+  const api = credentials.api;
   
   // Use fast selector
   const organizations = await selectOrganizationFast(api);
@@ -553,7 +553,7 @@ async function handleHealthCheck(credentials) {
     const orgId = await selectOrganization(credentials);
     if (!orgId) return;
     
-    const workspaceId = await selectWorkspace(credentials, orgId);
+    const workspaceId = await selectWorkspace(credentials.api || credentials, orgId);
     if (!workspaceId) return;
     
     args.push('-w', workspaceId);
@@ -594,23 +594,26 @@ async function handleUsageAnalytics(credentials) {
   
   // Add credentials
   if (credentials.email) {
-    args.push('--email', credentials.email);
+    args.push('-e', credentials.email);
   }
   if (credentials.password) {
-    args.push('--password', credentials.password);
+    args.push('-P', credentials.password);
   }
   
   // Handle scope selection
   if (scope === 'organization') {
     const orgId = await selectOrganization(credentials);
     if (!orgId) return;
-    args.push('-o', orgId);
+    args.push('-g', orgId);
   } else if (scope === 'workspace') {
+    // First select organization
     const orgId = await selectOrganization(credentials);
     if (!orgId) return;
     
-    const workspaceId = await selectWorkspace(credentials, orgId);
+    // Then select workspace
+    const workspaceId = await selectWorkspace(credentials.api || credentials, orgId);
     if (!workspaceId) return;
+    
     args.push('-w', workspaceId);
   }
   
@@ -651,18 +654,12 @@ async function handleUsageAnalytics(credentials) {
       }
     ]);
     
-    args.push('-s', dateAnswers.startDate);
-    args.push('-e', dateAnswers.endDate);
+    args.push('--from-date', dateAnswers.startDate);
+    args.push('--to-date', dateAnswers.endDate);
   }
   
   // Additional options
-  const { verbose, outputDir } = await inquirer.prompt([
-    {
-      type: 'confirm',
-      name: 'verbose',
-      message: 'Show detailed progress?',
-      default: true
-    },
+  const { outputDir } = await inquirer.prompt([
     {
       type: 'input',
       name: 'outputDir',
@@ -671,8 +668,7 @@ async function handleUsageAnalytics(credentials) {
     }
   ]);
   
-  if (verbose) args.push('-v');
-  args.push('--output-dir', outputDir);
+  args.push('-o', outputDir);
   
   console.log(chalk.cyan('\n📊 Generating usage analytics...\n'));
   await executeCommand('node', args);
@@ -749,6 +745,7 @@ async function handleSettings(credentials) {
         { name: '🔑 Update Credentials', value: 'credentials' },
         { name: '📁 View Configuration', value: 'config' },
         { name: '🔗 Change API URL', value: 'api-url' },
+        { name: '🔄 Check for Updates', value: 'update' },
         { name: '← Back', value: 'back' }
       ]
     }
@@ -807,6 +804,11 @@ async function handleSettings(credentials) {
         fs.writeFileSync('.env', envContent);
         console.log(chalk.green('✅ API URL updated in .env file'));
       }
+      break;
+      
+    case 'update':
+      console.log(chalk.cyan('\n🔄 Checking for updates...\n'));
+      await executeCommand('node', ['tellet-admin-tool.js', 'update']);
       break;
   }
 }

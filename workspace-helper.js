@@ -3,11 +3,11 @@ const inquirer = require('inquirer');
 const chalk = require('chalk');
 const ora = require('ora');
 
-async function selectWorkspace(credentials, organizationId) {
+async function selectWorkspace(api, organizationId) {
   const spinner = ora('Fetching workspaces...').start();
   
   try {
-    const workspaces = await getWorkspacesFromAPI(credentials, organizationId);
+    const workspaces = await getWorkspacesFromAPI(api, organizationId);
     spinner.stop();
     
     if (workspaces.length === 0) {
@@ -41,38 +41,23 @@ async function selectWorkspace(credentials, organizationId) {
   }
 }
 
-async function getWorkspacesFromAPI(credentials, organizationId) {
-  const axios = require('axios');
-  const api = axios.create({
-    baseURL: process.env.TELLET_API_URL || 'https://api.tellet.ai',
-    headers: {
-      'Content-Type': 'application/json'
-    }
-  });
-  
-  // First, we need to login to get a proper token
+async function getWorkspacesFromAPI(api, organizationId) {
   try {
-    const loginResponse = await api.post('/users/login', {
-      email: credentials.email,
-      password: credentials.password
-    });
-    const token = loginResponse.data.token || loginResponse.data.access_token;
-    api.defaults.headers['Authorization'] = `Bearer ${token}`;
-    
     // Get workspaces
     const response = await api.get(`/organizations/${organizationId}/workspaces`);
+    const workspaceData = response.data;
     
     // Parse the response - it returns {priv: [], shared: []}
     let workspaces = [];
-    if (response.data) {
-      if (response.data.priv) {
-        workspaces = workspaces.concat(response.data.priv.map(ws => ({
+    if (workspaceData) {
+      if (workspaceData.priv) {
+        workspaces = workspaces.concat(workspaceData.priv.map(ws => ({
           ...ws,
           type: 'Private'
         })));
       }
-      if (response.data.shared) {
-        workspaces = workspaces.concat(response.data.shared.map(ws => ({
+      if (workspaceData.shared) {
+        workspaces = workspaces.concat(workspaceData.shared.map(ws => ({
           ...ws,
           type: 'Shared'
         })));
@@ -86,36 +71,10 @@ async function getWorkspacesFromAPI(credentials, organizationId) {
   }
 }
 
-async function selectProjectFromWorkspace(credentials, organizationId, workspaceId) {
+async function selectProjectFromWorkspace(api, organizationId, workspaceId) {
   const spinner = ora('Fetching projects...').start();
   
   try {
-    // Use the API directly to get projects
-    const axios = require('axios');
-    const api = axios.create({
-      baseURL: process.env.TELLET_API_URL || 'https://api.tellet.ai',
-      headers: {
-        'Authorization': `Bearer ${credentials.token || credentials.password}`,
-        'Content-Type': 'application/json'
-      }
-    });
-    
-    // First, we need to login to get a proper token if we don't have one
-    if (!credentials.token) {
-      try {
-        const loginResponse = await api.post('/users/login', {
-          email: credentials.email,
-          password: credentials.password
-        });
-        credentials.token = loginResponse.data.token || loginResponse.data.access_token;
-        api.defaults.headers['Authorization'] = `Bearer ${credentials.token}`;
-      } catch (loginError) {
-        spinner.stop();
-        console.error(chalk.red('\n❌ Authentication failed'));
-        return null;
-      }
-    }
-    
     // Get projects from the workspace
     const response = await api.get(`/organizations/${organizationId}/workspaces/${workspaceId}/projects`);
     spinner.stop();

@@ -4,10 +4,11 @@ const {
   validateDate,
   validateFilePath,
   validatePositiveInt,
-  validateCommandArgs,
+  validateEnum,
   validateOptions,
-  schemas
+  commonSchemas
 } = require('../../lib/validation');
+const { ValidationError } = require('../../lib/errors');
 
 describe('lib/validation', () => {
   describe('validateObjectId', () => {
@@ -23,7 +24,7 @@ describe('lib/validation', () => {
       });
     });
 
-    it('should return null for invalid ObjectIds', () => {
+    it('should throw for invalid ObjectIds', () => {
       const invalidIds = [
         '123',
         'invalid',
@@ -34,7 +35,7 @@ describe('lib/validation', () => {
       ];
       
       invalidIds.forEach(id => {
-        expect(validateObjectId(id)).toBeNull();
+        expect(() => validateObjectId(id)).toThrow(ValidationError);
       });
     });
   });
@@ -53,19 +54,19 @@ describe('lib/validation', () => {
       });
     });
 
-    it('should return null for invalid emails', () => {
+    it('should throw for invalid emails', () => {
       const invalidEmails = [
-        'notanemail',
-        '@example.com',
-        'test@',
-        'test@.com',
-        'test..name@example.com',
-        '',
-        null
+        { email: 'notanemail', reason: 'no @ symbol' },
+        { email: '@example.com', reason: 'missing local part' },
+        { email: 'test@', reason: 'missing domain' },
+        { email: 'test@.com', reason: 'domain starts with dot' },
+        { email: 'test..name@example.com', reason: 'double dots' },
+        { email: '', reason: 'empty string' },
+        { email: null, reason: 'null value' }
       ];
       
-      invalidEmails.forEach(email => {
-        expect(validateEmail(email)).toBeNull();
+      invalidEmails.forEach(({ email, reason }) => {
+        expect(() => validateEmail(email)).toThrow(ValidationError);
       });
     });
   });
@@ -84,7 +85,7 @@ describe('lib/validation', () => {
       });
     });
 
-    it('should return null for invalid dates', () => {
+    it('should throw for invalid dates', () => {
       const invalidDates = [
         '2024-13-01',
         '2024-00-01',
@@ -96,23 +97,27 @@ describe('lib/validation', () => {
       ];
       
       invalidDates.forEach(date => {
-        expect(validateDate(date)).toBeNull();
+        expect(() => validateDate(date)).toThrow();
       });
     });
   });
 
   describe('validateFilePath', () => {
     it('should validate safe file paths', () => {
-      const safePaths = [
-        'exports/data.csv',
-        './reports/summary.json',
-        'media/image.png',
-        '/home/user/documents/file.txt'
+      const path = require('path');
+      const testCases = [
+        { input: 'exports/data.csv', expected: 'exports/data.csv' },
+        { input: './reports/summary.json', expected: 'reports/summary.json' },
+        { input: 'media/image.png', expected: 'media/image.png' }
       ];
       
-      safePaths.forEach(path => {
-        expect(validateFilePath(path)).toBe(path);
+      testCases.forEach(({ input, expected }) => {
+        expect(validateFilePath(input)).toBe(expected);
       });
+      
+      // Test absolute paths with allowAbsolute option
+      expect(validateFilePath('/home/user/documents/file.txt', { allowAbsolute: true }))
+        .toBe('/home/user/documents/file.txt');
     });
 
     it('should reject unsafe paths', () => {
@@ -125,7 +130,7 @@ describe('lib/validation', () => {
       ];
       
       unsafePaths.forEach(path => {
-        expect(validateFilePath(path)).toBeNull();
+        expect(() => validateFilePath(path)).toThrow();
       });
     });
   });
@@ -148,28 +153,23 @@ describe('lib/validation', () => {
     });
   });
 
-  describe('validateCommandArgs', () => {
-    it('should validate all delay values', () => {
-      const validDelays = ['1000', '5000', '30000', '120000'];
+  describe('validateEnum', () => {
+    it('should validate allowed enum values', () => {
+      const allowedValues = ['active', 'inactive', 'pending'];
       
-      validDelays.forEach(delay => {
-        expect(() => validateCommandArgs({ delay })).not.toThrow();
-      });
+      expect(validateEnum('active', allowedValues, 'status')).toBe('active');
+      expect(validateEnum('inactive', allowedValues, 'status')).toBe('inactive');
     });
 
-    it('should throw for invalid delay values', () => {
-      const invalidDelays = ['-1000', '999999999', 'abc', '1.5'];
+    it('should throw for invalid enum values', () => {
+      const allowedValues = ['active', 'inactive'];
       
-      invalidDelays.forEach(delay => {
-        expect(() => validateCommandArgs({ delay }))
-          .toThrow('Invalid delay value');
-      });
-    });
-
-    it('should validate dryRun flag', () => {
-      expect(() => validateCommandArgs({ dryRun: true })).not.toThrow();
-      expect(() => validateCommandArgs({ dryRun: false })).not.toThrow();
-      expect(() => validateCommandArgs({ dryRun: 'true' })).not.toThrow();
+      expect(() => validateEnum('pending', allowedValues, 'status'))
+        .toThrow(ValidationError);
+      expect(() => validateEnum('', allowedValues, 'status'))
+        .toThrow(ValidationError);
+      expect(() => validateEnum(null, allowedValues, 'status'))
+        .toThrow(ValidationError);
     });
   });
 
@@ -201,7 +201,7 @@ describe('lib/validation', () => {
       };
       
       expect(() => validateOptions({}, schema))
-        .toThrow('Missing required field: required');
+        .toThrow(ValidationError);
     });
 
     it('should throw for invalid types', () => {
@@ -210,7 +210,7 @@ describe('lib/validation', () => {
       };
       
       expect(() => validateOptions({ id: 'invalid' }, schema))
-        .toThrow('Invalid objectId for field: id');
+        .toThrow(ValidationError);
     });
 
     it('should apply defaults', () => {
@@ -231,7 +231,7 @@ describe('lib/validation', () => {
         .toEqual({ status: 'active' });
       
       expect(() => validateOptions({ status: 'pending' }, schema))
-        .toThrow('Invalid value for status. Must be one of: active, inactive');
+        .toThrow(ValidationError);
     });
 
     it('should validate integer ranges', () => {
@@ -243,24 +243,83 @@ describe('lib/validation', () => {
         .toEqual({ delay: 1000 });
       
       expect(() => validateOptions({ delay: '70000' }, schema))
-        .toThrow('delay must be between 0 and 60000');
+        .toThrow(ValidationError);
     });
   });
 
-  describe('schemas', () => {
+  describe('commonSchemas', () => {
     it('should have valid predefined schemas', () => {
-      expect(schemas.apiConfig).toBeDefined();
-      expect(schemas.exportOptions).toBeDefined();
-      expect(schemas.categorizeOptions).toBeDefined();
+      expect(commonSchemas).toBeDefined();
+      expect(commonSchemas.projectCommand).toBeDefined();
+      expect(commonSchemas.organizationCommand).toBeDefined();
+      expect(commonSchemas.dateRangeCommand).toBeDefined();
       
       // Test using a predefined schema
-      const config = validateOptions({
-        timeout: '5000',
-        retries: '3'
-      }, schemas.apiConfig);
+      const validated = validateOptions({
+        project: '507f1f77bcf86cd799439011',
+        delay: '5000'
+      }, commonSchemas.projectCommand);
       
-      expect(config.timeout).toBe(5000);
-      expect(config.retries).toBe(3);
+      expect(validated.project).toBe('507f1f77bcf86cd799439011');
+      expect(validated.delay).toBe(5000);
+    });
+
+    it('should validate organization command schema', () => {
+      const validated = validateOptions({
+        organization: '507f1f77bcf86cd799439011',
+        email: 'test@example.com'
+      }, commonSchemas.organizationCommand);
+      
+      expect(validated.organization).toBe('507f1f77bcf86cd799439011');
+      expect(validated.email).toBe('test@example.com');
+    });
+
+    it('should validate date range command schema', () => {
+      const validated = validateOptions({
+        startDate: '2024-01-01',
+        endDate: '2024-12-31'
+      }, commonSchemas.dateRangeCommand);
+      
+      expect(validated.startDate).toEqual(new Date('2024-01-01T00:00:00.000Z'));
+      expect(validated.endDate).toEqual(new Date('2024-12-31T00:00:00.000Z'));
+    });
+
+    it('should use default values from schema', () => {
+      const validated = validateOptions({
+        project: '507f1f77bcf86cd799439011'
+      }, commonSchemas.projectCommand);
+      
+      expect(validated.delay).toBe(1000);
+      expect(validated.outputDir).toBe('./exports');
+    });
+
+    it('should validate URL pattern', () => {
+      expect(() => validateOptions({
+        project: '507f1f77bcf86cd799439011',
+        url: 'not-a-url'
+      }, commonSchemas.projectCommand)).toThrow();
+      
+      const validated = validateOptions({
+        project: '507f1f77bcf86cd799439011',
+        url: 'https://api.tellet.ai'
+      }, commonSchemas.projectCommand);
+      
+      expect(validated.url).toBe('https://api.tellet.ai');
+    });
+  });
+
+  describe('boolean type validation', () => {
+    it('should convert values to boolean', () => {
+      const schema = {
+        active: { type: 'boolean' }
+      };
+      
+      expect(validateOptions({ active: true }, schema)).toEqual({ active: true });
+      expect(validateOptions({ active: false }, schema)).toEqual({ active: false });
+      expect(validateOptions({ active: 'true' }, schema)).toEqual({ active: true });
+      expect(validateOptions({ active: '' }, schema)).toEqual({ active: false });
+      expect(validateOptions({ active: 0 }, schema)).toEqual({ active: false });
+      expect(validateOptions({ active: 1 }, schema)).toEqual({ active: true });
     });
   });
 });

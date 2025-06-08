@@ -1,18 +1,33 @@
 {
-  "name": "tellet-admin-cli",
-  "version": "2.7.2",
-  "description": "Admin tools for Tellet - auto-categorization, transcript export, media download, data export, bulk user management, and metadata management",
+  "name": "@tellet/admin-cli",
+  "version": "3.0.0",
+  "description": "Powerful command-line tool for managing Tellet projects - auto-categorization, data export, media downloads, usage analytics, and more",
+  "keywords": [
+    "tellet",
+    "admin",
+    "cli",
+    "categorization",
+    "export",
+    "analytics",
+    "ai",
+    "interviews",
+    "research"
+  ],
+  "author": "Tellet Development Team",
+  "license": "MIT",
   "main": "tellet-admin-tool.js",
   "bin": {
     "tellet-admin": "./tellet-admin-tool.js",
     "tellet-wizard": "./tellet-wizard.js"
   },
   "files": [
+    "lib/**/*.js",
     "*.js",
     "*.cmd",
     "*.md",
     "sample-*.csv",
-    ".env.example"
+    ".env.example",
+    "LICENSE"
   ],
   "scripts": {
     "start": "node tellet-admin-tool.js",
@@ -34,6 +49,7 @@
     "axios": "^1.6.0",
     "axios-retry": "^4.5.0",
     "chalk": "^4.1.2",
+    "cli-table3": "^0.6.5",
     "commander": "^11.0.0",
     "csv-parse": "^5.5.0",
     "csv-stringify": "^6.5.2",

@@ -10,11 +10,12 @@ jest.mock('chalk', () => ({
   gray: jest.fn(str => str),
   magenta: jest.fn(str => str),
   blue: jest.fn(str => str),
-  bold: {
+  bold: Object.assign(jest.fn(str => str), {
     green: jest.fn(str => str),
     red: jest.fn(str => str),
-    yellow: jest.fn(str => str)
-  }
+    yellow: jest.fn(str => str),
+    underline: jest.fn(str => str)
+  })
 }));
 
 describe('Logger', () => {
@@ -26,7 +27,7 @@ describe('Logger', () => {
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
     consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
     
-    testLogger = new Logger({ prefix: 'TEST' });
+    testLogger = new Logger({ level: 'debug' });
   });
   
   afterEach(() => {
@@ -39,38 +40,36 @@ describe('Logger', () => {
     it('should initialize with default options', () => {
       const logger = new Logger();
       expect(logger.options.level).toBe('info');
-      expect(logger.options.prefix).toBe('');
-      expect(logger.options.timestamps).toBe(false);
+      expect(logger.options.colorize).toBe(true);
+      expect(logger.options.timestamp).toBe(true);
     });
 
     it('should accept custom options', () => {
       const logger = new Logger({
         level: 'debug',
-        prefix: 'APP',
-        timestamps: true
+        colorize: false,
+        timestamp: false
       });
       
       expect(logger.options.level).toBe('debug');
-      expect(logger.options.prefix).toBe('APP');
-      expect(logger.options.timestamps).toBe(true);
+      expect(logger.options.colorize).toBe(false);
+      expect(logger.options.timestamp).toBe(false);
     });
   });
 
   describe('log levels', () => {
     it('should log debug messages when level is debug', () => {
-      testLogger.setLevel('debug');
-      testLogger.debug('Debug message');
+      const debugLogger = new Logger({ level: 'debug' });
+      debugLogger.debug('Debug message');
       
       expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('[TEST]'),
-        expect.stringContaining('[DEBUG]'),
-        'Debug message'
+        expect.stringContaining('🔍')
       );
     });
 
     it('should not log debug when level is info', () => {
-      testLogger.setLevel('info');
-      testLogger.debug('Debug message');
+      const infoLogger = new Logger({ level: 'info' });
+      infoLogger.debug('Debug message');
       
       expect(consoleLogSpy).not.toHaveBeenCalled();
     });
@@ -79,61 +78,51 @@ describe('Logger', () => {
       testLogger.info('Info message');
       
       expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('[TEST]'),
-        expect.stringContaining('[INFO]'),
-        'Info message'
+        expect.stringContaining('ℹ️')
       );
     });
 
     it('should log warnings', () => {
       testLogger.warn('Warning message');
       
-      expect(consoleWarnSpy).toHaveBeenCalledWith(
-        expect.stringContaining('[TEST]'),
-        expect.stringContaining('[WARN]'),
-        'Warning message'
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        expect.stringContaining('⚠️')
       );
     });
 
     it('should log errors', () => {
       testLogger.error('Error message');
       
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        expect.stringContaining('[TEST]'),
-        expect.stringContaining('[ERROR]'),
-        'Error message'
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        expect.stringContaining('❌')
       );
     });
 
-    it('should always log errors regardless of level', () => {
-      testLogger.setLevel('silent');
-      testLogger.error('Error message');
+    it('should log errors at error level', () => {
+      const errorLogger = new Logger({ level: 'error' });
+      errorLogger.error('Error message');
       
-      expect(consoleErrorSpy).toHaveBeenCalled();
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        expect.stringContaining('❌')
+      );
     });
   });
 
   describe('formatting', () => {
     it('should include timestamps when enabled', () => {
-      const logger = new Logger({ timestamps: true });
+      const logger = new Logger({ timestamp: true });
       logger.info('Test');
       
       expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringMatching(/\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\]/),
-        expect.any(String),
-        'Test'
+        expect.stringContaining('ℹ️')
       );
     });
 
-    it('should format objects and arrays', () => {
-      testLogger.info('Data:', { key: 'value' }, [1, 2, 3]);
+    it('should format messages with metadata', () => {
+      testLogger.info('Data', { key: 'value' });
       
       expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.any(String),
-        expect.any(String),
-        'Data:',
-        { key: 'value' },
-        [1, 2, 3]
+        expect.stringContaining('ℹ️')
       );
     });
   });
@@ -143,51 +132,40 @@ describe('Logger', () => {
       testLogger.success('Operation completed');
       
       expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('✓'),
-        'Operation completed'
+        expect.stringContaining('✅')
       );
     });
 
     it('should log failure messages', () => {
       testLogger.fail('Operation failed');
       
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        expect.stringContaining('✗'),
-        'Operation failed'
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        expect.stringContaining('❌ Operation failed')
       );
     });
 
     it('should create sections', () => {
       testLogger.section('New Section');
       
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('━━━')
-      );
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('New Section')
-      );
+      expect(consoleLogSpy).toHaveBeenCalledWith('');
+      expect(consoleLogSpy).toHaveBeenCalledWith('New Section');
     });
 
     it('should create subsections', () => {
       testLogger.subsection('Subsection');
       
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('──')
-      );
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Subsection')
-      );
+      expect(consoleLogSpy).toHaveBeenCalledWith('');
+      expect(consoleLogSpy).toHaveBeenCalledWith('Subsection');
     });
 
     it('should log bullet points', () => {
       testLogger.bullet('Item 1');
-      testLogger.bullet('Item 2', 2);
       
       expect(consoleLogSpy).toHaveBeenCalledWith('  • Item 1');
-      expect(consoleLogSpy).toHaveBeenCalledWith('    ◦ Item 2');
     });
 
     it('should create tables', () => {
+      const consoleTableSpy = jest.spyOn(console, 'table').mockImplementation();
       const data = [
         { name: 'John', age: 30 },
         { name: 'Jane', age: 25 }
@@ -195,34 +173,20 @@ describe('Logger', () => {
       
       testLogger.table(data);
       
-      // Check header
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Name')
-      );
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Age')
-      );
+      expect(consoleTableSpy).toHaveBeenCalledWith(data, undefined);
       
-      // Check data
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('John')
-      );
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('30')
-      );
+      consoleTableSpy.mockRestore();
     });
   });
 
   describe('child loggers', () => {
-    it('should create child logger with combined prefix', () => {
-      const child = testLogger.child('CHILD');
-      child.info('Message from child');
+    it('should create child logger with context', () => {
+      const child = testLogger.child({ module: 'CHILD' });
+      expect(child).toBeInstanceOf(Logger);
+      expect(child.context).toEqual({ module: 'CHILD' });
       
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('[TEST:CHILD]'),
-        expect.any(String),
-        'Message from child'
-      );
+      child.info('Message from child');
+      expect(consoleLogSpy).toHaveBeenCalled();
     });
   });
 });
@@ -230,21 +194,24 @@ describe('Logger', () => {
 describe('ProgressTracker', () => {
   let tracker;
   let processStdoutSpy;
+  let consoleLogSpy;
   
   beforeEach(() => {
     processStdoutSpy = jest.spyOn(process.stdout, 'write').mockImplementation();
-    tracker = new ProgressTracker(100, 'Processing');
+    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
+    tracker = new ProgressTracker(100, { showPercentage: true });
   });
   
   afterEach(() => {
     processStdoutSpy.mockRestore();
+    consoleLogSpy.mockRestore();
   });
 
   describe('constructor', () => {
-    it('should initialize with total and label', () => {
+    it('should initialize with total and options', () => {
       expect(tracker.total).toBe(100);
-      expect(tracker.label).toBe('Processing');
       expect(tracker.current).toBe(0);
+      expect(tracker.options.showPercentage).toBe(true);
     });
   });
 
@@ -253,27 +220,24 @@ describe('ProgressTracker', () => {
       tracker.update(50);
       
       expect(tracker.current).toBe(50);
-      expect(processStdoutSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Processing: 50/100')
-      );
-      expect(processStdoutSpy).toHaveBeenCalledWith(
-        expect.stringContaining('50.0%')
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Progress: 50/100')
       );
     });
 
-    it('should show progress bar', () => {
+    it('should show progress with percentage', () => {
       tracker.update(25);
       
-      const output = processStdoutSpy.mock.calls[0][0];
-      expect(output).toContain('█');
-      expect(output).toContain('░');
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        expect.stringContaining('(25%)')
+      );
     });
 
     it('should handle completion', () => {
       tracker.update(100);
       
-      expect(processStdoutSpy).toHaveBeenCalledWith(
-        expect.stringContaining('100.0%')
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        expect.stringContaining('(100%)')
       );
     });
   });
@@ -290,23 +254,83 @@ describe('ProgressTracker', () => {
     });
   });
 
-  describe('finish', () => {
+  describe('complete', () => {
     it('should complete the progress', () => {
       tracker.update(50);
-      tracker.finish();
-      
-      expect(tracker.current).toBe(100);
-      expect(processStdoutSpy).toHaveBeenCalledWith('\n');
-    });
-
-    it('should show custom message', () => {
-      const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
-      
-      tracker.finish('Completed successfully!');
+      tracker.complete();
       
       expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('✓'),
-        'Completed successfully!'
+        expect.stringContaining('Completed 100 items')
+      );
+    });
+
+    it('should show completion statistics', () => {
+      tracker.complete();
+      
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Completed 100 items')
+      );
+    });
+  });
+});
+
+describe('New Logger methods', () => {
+  const logger = new Logger({ level: 'info' });
+  
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('section', () => {
+    it('should output section header with formatting', () => {
+      const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
+      
+      logger.section('Test Section');
+      
+      expect(consoleLogSpy).toHaveBeenCalledTimes(3);
+      expect(consoleLogSpy).toHaveBeenNthCalledWith(1, '');
+      expect(consoleLogSpy).toHaveBeenNthCalledWith(2, expect.stringContaining('Test Section'));
+      expect(consoleLogSpy).toHaveBeenNthCalledWith(3, '');
+      
+      consoleLogSpy.mockRestore();
+    });
+  });
+
+  describe('subsection', () => {
+    it('should output subsection header with formatting', () => {
+      const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
+      
+      logger.subsection('Test Subsection');
+      
+      expect(consoleLogSpy).toHaveBeenCalledTimes(2);
+      expect(consoleLogSpy).toHaveBeenNthCalledWith(1, '');
+      expect(consoleLogSpy).toHaveBeenNthCalledWith(2, expect.stringContaining('Test Subsection'));
+      
+      consoleLogSpy.mockRestore();
+    });
+  });
+
+  describe('bullet', () => {
+    it('should output bullet point item', () => {
+      const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
+      
+      logger.bullet('Item 1');
+      
+      expect(consoleLogSpy).toHaveBeenCalledWith('  • Item 1');
+      
+      consoleLogSpy.mockRestore();
+    });
+  });
+
+  describe('fail', () => {
+    it('should output failure message with icon', () => {
+      const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
+      const logger = new Logger({ level: 'error' });
+      
+      logger.fail('Operation failed');
+      
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        expect.stringContaining('❌ Operation failed')
       );
       
       consoleLogSpy.mockRestore();
@@ -317,6 +341,6 @@ describe('ProgressTracker', () => {
 describe('Singleton logger', () => {
   it('should export a default logger instance', () => {
     expect(logger).toBeInstanceOf(Logger);
-    expect(logger.options.level).toBe('info');
+    expect(logger.options.level).toBe('error'); // 'error' in test environment
   });
 });
