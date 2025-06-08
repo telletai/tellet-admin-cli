@@ -82,11 +82,14 @@ class UsageAnalytics {
                     
                     // Combine private and shared workspaces
                     let allWorkspaces = [];
-                    if (workspaceData.privateWorkspaces) {
-                        allWorkspaces = allWorkspaces.concat(workspaceData.privateWorkspaces);
+                    // Check for different possible keys
+                    if (workspaceData.privateWorkspaces || workspaceData.priv) {
+                        const privateWs = workspaceData.privateWorkspaces || workspaceData.priv || [];
+                        allWorkspaces = allWorkspaces.concat(privateWs);
                     }
-                    if (workspaceData.sharedWorkspaces) {
-                        allWorkspaces = allWorkspaces.concat(workspaceData.sharedWorkspaces);
+                    if (workspaceData.sharedWorkspaces || workspaceData.shared) {
+                        const sharedWs = workspaceData.sharedWorkspaces || workspaceData.shared || [];
+                        allWorkspaces = allWorkspaces.concat(sharedWs);
                     }
                     
                     if (allWorkspaces.some(ws => ws._id === this.options.workspaceId)) {
@@ -128,11 +131,14 @@ class UsageAnalytics {
                     
                     // Combine private and shared workspaces
                     let workspaces = [];
-                    if (workspaceData.privateWorkspaces) {
-                        workspaces = workspaces.concat(workspaceData.privateWorkspaces);
+                    // Check for different possible keys
+                    if (workspaceData.privateWorkspaces || workspaceData.priv) {
+                        const privateWs = workspaceData.privateWorkspaces || workspaceData.priv || [];
+                        workspaces = workspaces.concat(privateWs);
                     }
-                    if (workspaceData.sharedWorkspaces) {
-                        workspaces = workspaces.concat(workspaceData.sharedWorkspaces);
+                    if (workspaceData.sharedWorkspaces || workspaceData.shared) {
+                        const sharedWs = workspaceData.sharedWorkspaces || workspaceData.shared || [];
+                        workspaces = workspaces.concat(sharedWs);
                     }
                     
                     // Filter by workspace ID if specified
@@ -194,11 +200,12 @@ class UsageAnalytics {
     }
 
     async collectProjectStats(orgId, workspaceId, project) {
-        this.log(`Analyzing project: ${project.name}`);
+        const projectName = project.name || project.title || project._id;
+        this.log(`Analyzing project: ${projectName}`);
         
         const projectStats = {
             id: project._id,
-            name: project.name,
+            name: projectName,
             status: project.status,
             organizationId: orgId,
             organizationName: this.stats.organizations[orgId].name,

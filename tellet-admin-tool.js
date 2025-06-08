@@ -81,14 +81,17 @@ async function getWorkspaces(organizationId) {
     const response = await api.get(url);
     const data = response.data;
     
-    // Handle the structure with privateWorkspaces and sharedWorkspaces
+    // Handle the structure with privateWorkspaces/priv and sharedWorkspaces/shared
     if (data && typeof data === 'object' && !Array.isArray(data)) {
       let workspaces = [];
-      if (data.privateWorkspaces) {
-        workspaces = workspaces.concat(data.privateWorkspaces);
+      // Check for different possible keys
+      if (data.privateWorkspaces || data.priv) {
+        const privateWs = data.privateWorkspaces || data.priv || [];
+        workspaces = workspaces.concat(privateWs);
       }
-      if (data.sharedWorkspaces) {
-        workspaces = workspaces.concat(data.sharedWorkspaces);
+      if (data.sharedWorkspaces || data.shared) {
+        const sharedWs = data.sharedWorkspaces || data.shared || [];
+        workspaces = workspaces.concat(sharedWs);
       }
       return workspaces;
     }
