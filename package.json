@@ -20,6 +20,14 @@
     "categorize": "node auto-categorize-project.js",
     "start:ts": "ts-node auto-categorize-project.ts",
     "build": "tsc auto-categorize-project.ts --outDir dist --module commonjs --target es2020",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint . --ext .js",
+    "lint:fix": "eslint . --ext .js --fix",
+    "format": "prettier --write '**/*.{js,json,md}'",
+    "format:check": "prettier --check '**/*.{js,json,md}'",
+    "validate": "npm run lint && npm run format:check && npm run test",
     "postinstall": "node -e \"console.log('\\n🎉 Tellet Admin CLI installed successfully!\\nRun \\'tellet-wizard\\' to get started.\\n')\""
   },
   "dependencies": {
@@ -37,7 +45,13 @@
   "devDependencies": {
     "@types/node": "^20.0.0",
     "ts-node": "^10.9.0",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "jest": "^29.7.0",
+    "@types/jest": "^29.5.0",
+    "eslint": "^8.55.0",
+    "prettier": "^3.1.0",
+    "axios-mock-adapter": "^1.22.0",
+    "supertest": "^6.3.3"
   },
   "engines": {
     "node": ">=14.0.0"
