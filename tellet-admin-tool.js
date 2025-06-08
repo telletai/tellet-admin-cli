@@ -653,6 +653,7 @@ program
   .option('-P, --password <password>', 'Password for authentication', DEFAULT_PASSWORD)
   .option('-u, --url <url>', 'API base URL', API_BASE_URL)
   .option('--show-ids', 'Show full IDs (not truncated)', false)
+  .option('--fast', 'Fast mode - only show organizations without nested data', false)
   .action(async (options) => {
     try {
       validateCredentials(options);
@@ -672,6 +673,21 @@ program
         process.exit(1);
       }
       
+      // Fast mode - only show organizations
+      if (options.fast) {
+        console.log('📋 Organizations (fast mode):\n');
+        for (const org of organizations) {
+          const orgId = options.showIds ? org._id : org._id.slice(-6);
+          console.log(`📂 ${org.name}`);
+          console.log(`   ID: ${orgId}`);
+          console.log(`   Role: ${org.user_role || 'member'}`);
+          console.log('');
+        }
+        console.log(`Total: ${organizations.length} organization(s)`);
+        process.exit(0);
+      }
+      
+      // Full mode - show everything
       for (const org of organizations) {
         const orgId = options.showIds ? org._id : org._id.slice(-6);
         console.log(`📂 Organization: ${org.name}`);

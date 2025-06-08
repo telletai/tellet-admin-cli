@@ -9,6 +9,7 @@ const { spawn } = require('child_process');
 const { selectOrEnterProject } = require('./project-helper');
 const { selectWorkspace, selectProjectFromWorkspace } = require('./workspace-helper');
 const { selectProjectWithMethod } = require('./selection-helper');
+const { selectOrganizationFast, selectWorkspaceFast, selectProjectFast } = require('./fast-org-selector');
 
 // Load environment variables if available
 try {
@@ -41,7 +42,7 @@ ${chalk.cyan(`    @@@@                 @@@@  @@@@                 @@@@
 
 ${chalk.cyan('╔═══════════════════════════════════════════════════════════╗')}
 ${chalk.cyan('║')}                ${chalk.bold.white('TELLET ADMIN TOOL WIZARD')}                ${chalk.cyan('║')}
-${chalk.cyan('║')}                  ${chalk.gray('Interactive CLI v2.6.3')}                  ${chalk.cyan('║')}
+${chalk.cyan('║')}                  ${chalk.gray('Interactive CLI v2.7.0')}                  ${chalk.cyan('║')}
 ${chalk.cyan('╚═══════════════════════════════════════════════════════════╝')}
 `;
 
@@ -125,16 +126,62 @@ TELLET_PASSWORD=${answers.password}
 }
 
 async function selectProjectWithFlow(credentials) {
-  // First, select organization
-  const orgId = await selectOrganization(credentials);
+  // Create authenticated API instance
+  const axios = require('axios');
+  const apiUrl = process.env.TELLET_API_URL || 'https://api.tellet.ai';
+  const api = axios.create({
+    baseURL: apiUrl,
+    headers: { 'Content-Type': 'application/json' }
+  });
+  
+  // Login first
+  try {
+    const loginResponse = await api.post('/users/login', {
+      email: credentials.email,
+      password: credentials.password
+    });
+    const token = loginResponse.data.token || loginResponse.data.access_token;
+    api.defaults.headers.Authorization = `Bearer ${token}`;
+  } catch (error) {
+    console.error(chalk.red('❌ Authentication failed'));
+    return null;
+  }
+  
+  // Use fast selectors
+  const organizations = await selectOrganizationFast(api);
+  if (!organizations) return null;
+  
+  const { orgId } = await inquirer.prompt([{
+    type: 'list',
+    name: 'orgId',
+    message: 'Select organization:',
+    choices: [...organizations, new inquirer.Separator(), { name: '← Cancel', value: null }]
+  }]);
+  
   if (!orgId) return null;
   
-  // Then, select workspace
-  const workspaceId = await selectWorkspace(credentials, orgId);
+  const workspaces = await selectWorkspaceFast(api, orgId);
+  if (!workspaces) return null;
+  
+  const { workspaceId } = await inquirer.prompt([{
+    type: 'list',
+    name: 'workspaceId',
+    message: 'Select workspace:',
+    choices: [...workspaces, new inquirer.Separator(), { name: '← Cancel', value: null }]
+  }]);
+  
   if (!workspaceId) return null;
   
-  // Finally, select project
-  const projectId = await selectProjectFromWorkspace(credentials, orgId, workspaceId);
+  const projects = await selectProjectFast(api, orgId, workspaceId);
+  if (!projects) return null;
+  
+  const { projectId } = await inquirer.prompt([{
+    type: 'list',
+    name: 'projectId',
+    message: 'Select project:',
+    choices: [...projects, new inquirer.Separator(), { name: '← Cancel', value: null }]
+  }]);
+  
   return projectId;
 }
 
@@ -246,75 +293,41 @@ async function selectProject(credentials) {
 }
 
 async function selectOrganization(credentials) {
-  const spinner = ora('Fetching your organizations...').start();
+  // Create authenticated API instance
+  const axios = require('axios');
+  const apiUrl = process.env.TELLET_API_URL || 'https://api.tellet.ai';
+  const api = axios.create({
+    baseURL: apiUrl,
+    headers: { 'Content-Type': 'application/json' }
+  });
   
+  // Login first
   try {
-    const result = await runCommand('node', [
-      'tellet-admin-tool.js',
-      'list-orgs',
-      '-e', credentials.email,
-      '-P', credentials.password,
-      '--show-ids'
-    ]);
-    
-    spinner.stop();
-    
-    // Check if the command failed
-    if (result.code !== 0) {
-      console.error(chalk.red('\n❌ Failed to fetch organizations'));
-      console.error(chalk.gray('Error output:', result.stderr || result.stdout));
-      
-      if (result.stdout.includes('Authentication failed') || result.stderr.includes('Authentication failed')) {
-        console.error(chalk.yellow('Please check your credentials and try again.'));
-      }
-      
-      return null;
-    }
-    
-    // Parse organizations
-    const organizations = [];
-    const lines = result.stdout.split('\n');
-    
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      if (line.includes('📂 Organization:')) {
-        const nameMatch = line.match(/📂 Organization:\s+(.+)/);
-        const idLine = lines[i + 1];
-        const idMatch = idLine && idLine.match(/ID:\s+([a-f0-9]{24})/);
-        
-        if (nameMatch && idMatch) {
-          organizations.push({
-            name: nameMatch[1],
-            value: idMatch[1]
-          });
-        }
-      }
-    }
-    
-    if (organizations.length === 0) {
-      console.log(chalk.yellow('\n⚠️  No organizations found.'));
-      console.log(chalk.gray('This could mean:'));
-      console.log(chalk.gray('  - Your credentials might be incorrect'));
-      console.log(chalk.gray('  - You might not have access to any organizations'));
-      console.log(chalk.gray('  - There might be a connection issue'));
-      return null;
-    }
-    
-    const { orgId } = await inquirer.prompt([
-      {
-        type: 'list',
-        name: 'orgId',
-        message: 'Select an organization:',
-        choices: [...organizations, new inquirer.Separator(), { name: '← Cancel', value: null }]
-      }
-    ]);
-    
-    return orgId;
+    const loginResponse = await api.post('/users/login', {
+      email: credentials.email,
+      password: credentials.password
+    });
+    const token = loginResponse.data.token || loginResponse.data.access_token;
+    api.defaults.headers.Authorization = `Bearer ${token}`;
   } catch (error) {
-    spinner.stop();
-    console.error(chalk.red('\n❌ Failed to fetch organizations:'), error.message);
+    console.error(chalk.red('❌ Authentication failed'));
     return null;
   }
+  
+  // Use fast selector
+  const organizations = await selectOrganizationFast(api);
+  if (!organizations) return null;
+  
+  const { orgId } = await inquirer.prompt([
+    {
+      type: 'list',
+      name: 'orgId',
+      message: 'Select an organization:',
+      choices: [...organizations, new inquirer.Separator(), { name: '← Cancel', value: null }]
+    }
+  ]);
+  
+  return orgId;
 }
 
 async function runCommand(command, args) {
