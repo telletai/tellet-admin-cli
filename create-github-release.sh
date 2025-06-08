@@ -61,10 +61,10 @@ npm install -g git+https://github.com/telletai/tellet-admin-cli.git@latest
 
 ### ✨ What's New in v$CURRENT_VERSION
 
-- Fixed usage analytics workspace handling
-- Properly handle privateWorkspaces and sharedWorkspaces API structure
-- Organized exports in org/workspace/project directory hierarchy
-- Fixed 'workspaces is not iterable' error
+- Complete fix for usage analytics workspace handling
+- Support both 'priv'/'shared' and 'privateWorkspaces'/'sharedWorkspaces' API keys
+- Fix project name display in analytics reports
+- Successfully tested with large organizations like Kantar Nederland
 
 ### 📋 Features
 
