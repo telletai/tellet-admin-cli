@@ -61,9 +61,10 @@ npm install -g git+https://github.com/telletai/tellet-admin-cli.git@latest
 
 ### ✨ What's New in v$CURRENT_VERSION
 
-- Added stylized Tellet ASCII art logo to wizard banner
-- Improved wizard banner alignment and visual consistency
-- Enhanced overall user experience with better branding
+- Fixed usage analytics workspace handling
+- Properly handle privateWorkspaces and sharedWorkspaces API structure
+- Organized exports in org/workspace/project directory hierarchy
+- Fixed 'workspaces is not iterable' error
 
 ### 📋 Features
 
