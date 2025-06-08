@@ -7,6 +7,13 @@
     "tellet-admin": "./tellet-admin-tool.js",
     "tellet-wizard": "./tellet-wizard.js"
   },
+  "files": [
+    "*.js",
+    "*.cmd",
+    "*.md",
+    "sample-*.csv",
+    ".env.example"
+  ],
   "scripts": {
     "start": "node tellet-admin-tool.js",
     "wizard": "node tellet-wizard.js",

@@ -333,7 +333,7 @@ async function selectOrganization(credentials) {
 async function runCommand(command, args) {
   return new Promise((resolve, reject) => {
     const proc = spawn(command, args, { 
-      shell: true,
+      shell: process.platform === 'win32' ? true : false,
       stdio: ['inherit', 'pipe', 'pipe']
     });
     
@@ -361,7 +361,7 @@ async function runCommand(command, args) {
 async function executeCommand(command, args) {
   return new Promise((resolve, reject) => {
     const proc = spawn(command, args, { 
-      shell: true,
+      shell: process.platform === 'win32' ? true : false,
       stdio: 'inherit'
     });
     

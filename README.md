@@ -21,6 +21,7 @@ A powerful command-line tool for managing Tellet projects, including automated c
 
 Install the tool globally from npm:
 
+**macOS/Linux:**
 ```bash
 # Install globally
 npm install -g @tellet/admin-cli
@@ -29,6 +30,21 @@ npm install -g @tellet/admin-cli
 tellet-wizard  # Launch the interactive wizard
 tellet-admin --help  # See all available commands
 ```
+
+**Windows:**
+```cmd
+REM Install globally
+npm install -g @tellet/admin-cli
+
+REM Now you can use the tool from anywhere
+tellet-wizard
+tellet-admin --help
+```
+
+**Windows Installation Notes:**
+- Requires Node.js for Windows (download from https://nodejs.org/)
+- Works in Command Prompt, PowerShell, and Git Bash
+- Alternative: Use Windows Package Manager: `winget install OpenJS.NodeJS`
 
 **Updating the Tool:**
 
@@ -50,6 +66,7 @@ npm install -g @tellet/admin-cli@latest
 
 Clone and install locally:
 
+**macOS/Linux:**
 ```bash
 cd tellet-admin-cli
 npm install
@@ -57,6 +74,21 @@ npm install
 # Run with node
 node tellet-admin-tool.js --help
 node tellet-wizard.js
+```
+
+**Windows:**
+```cmd
+cd tellet-admin-cli
+npm install
+
+REM Run with node
+node tellet-admin-tool.js --help
+node tellet-wizard.js
+
+REM Or use the provided batch files
+install.cmd        REM Install dependencies and global CLI
+tellet-wizard.cmd  REM Launch the wizard
+tellet-admin.cmd   REM Run CLI commands
 ```
 
 ### Option 3: Distribution via Private Registry
