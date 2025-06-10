@@ -26,9 +26,11 @@ const updateChecker = new UpdateChecker();
 const DEFAULT_EMAIL = process.env.TELLET_EMAIL || process.env.TELLET_ADMIN_EMAIL;
 const DEFAULT_PASSWORD = process.env.TELLET_PASSWORD || process.env.TELLET_ADMIN_PASSWORD;
 
+// Get version from package.json
+const packageJson = require('./package.json');
+
 // ASCII Art Banner
-const banner = `
-${chalk.cyan(`    @@@@                 @@@@  @@@@                 @@@@    
+const asciiArt = `    @@@@                 @@@@  @@@@                 @@@@    
     @@@@                 @@@@  @@@@                @@@@@    
     @@@@@@@     @@@      @@@@  @@@@       @@      @@@@@@@@@@
 @@@@@@@@@@@@@@@@@@@@@@   @@@@  @@@@    @@@@@@@@  @@@@@@@@@@@
@@ -38,11 +40,14 @@ ${chalk.cyan(`    @@@@                 @@@@  @@@@                 @@@@
    @@@@     @@@@@@@@@ @@@@@@@  @@@@  @@@@@@@       @@@@@    
    @@@@@   @@@@@@@@ @@@@@@@@@  @@@@  @@@@    @@@@  @@@@@    
     @@@@@@@@@@@@@@@@@@@@ @@@@  @@@@   @@@@@@@@@@    @@@@@@@@
-     @@@@@@@@ @@@@@@@    @@@@  @@@@     @@@@@@       @@@@@@@`)}
+     @@@@@@@@ @@@@@@@    @@@@  @@@@     @@@@@@       @@@@@@@`;
+
+const banner = `
+${chalk.cyan(asciiArt)}
 
 ${chalk.cyan('╔═══════════════════════════════════════════════════════════╗')}
 ${chalk.cyan('║')}                  ${chalk.bold.white('TELLET ADMIN TOOL WIZARD')}                 ${chalk.cyan('║')}
-${chalk.cyan('║')}                   ${chalk.gray('Interactive CLI v3.0.0')}                  ${chalk.cyan('║')}
+${chalk.cyan('║')}                   ${chalk.gray(`Interactive CLI v${packageJson.version}`)}                  ${chalk.cyan('║')}
 ${chalk.cyan('╚═══════════════════════════════════════════════════════════╝')}
 `;
 

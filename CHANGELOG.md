@@ -5,6 +5,56 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.2] - 2025-06-10
+
+### 🔧 Maintenance Release
+
+This patch release includes version number updates and documentation improvements following the critical fixes in v3.0.1.
+
+### Changed
+- Updated version number to 3.0.2 across all documentation
+- Improved release notes documentation
+- Enhanced changelog organization
+
+### Documentation
+- Updated README.md with correct version badges
+- Updated all documentation references to v3.0.2
+- Added comprehensive release notes for better version tracking
+
+## [3.0.1] - 2025-06-10
+
+### 🐛 Critical Bug Fixes
+
+This patch release fixes critical authentication issues and improves overall stability.
+
+### Fixed
+- **Authentication Crisis Resolved**: Fixed `requireAuth` function that was returning raw axios client instead of APIClient instance
+  - All commands were failing with 401 Unauthorized errors
+  - API client now properly initialized with authentication tokens
+- **Module Compatibility**: Replaced ES module `p-limit` with custom CommonJS `ConcurrencyLimiter`
+  - Resolved "Cannot use import statement outside a module" errors
+- **Response Handling**: Updated all command handlers to work with APIClient's direct data responses
+  - Removed unnecessary `response.data` references throughout codebase
+- **Wizard Display Issues**:
+  - Fixed missing ASCII art banner in cyan color
+  - Dynamic version loading from package.json (was showing 3.0.0)
+- **Command-Specific Fixes**:
+  - `export-overview`: Fixed missing `generateFilename` function and CSV writer usage
+  - `export-conversations`: Fixed enum validation schema (`values` → `enum`)
+  - `download-media`: Fixed project endpoint URL construction
+  - `health-check`: Updated to use APIClient response format
+  - `categorize`: Fixed response handling in auto-categorize-logic.js
+  - `usage-analytics`: Improved response handling (partial fix)
+
+### Changed
+- All test files updated to match new APIClient behavior
+- Test coverage maintained at 100% with all 222 tests passing
+
+### Developer Notes
+- The root cause was the authentication refactor in v3.0.0 not being properly integrated
+- APIClient instance creation was missing in the critical `requireAuth` wrapper
+- This affected every authenticated command in the CLI
+
 ## [3.0.0] - 2025-01-08
 
 ### 🎉 Major Release - Complete Modular Rewrite

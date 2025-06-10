@@ -59,8 +59,13 @@ class UsageAnalytics {
             if (this.options.organizationId) {
                 // If specific organization is requested, we need to get its details
                 // Since there's no direct endpoint to get a single org, we get all and filter
-                const orgsResponse = await this.api.get('/organizations');
-                const allOrgs = orgsResponse.data;
+                const allOrgs = await this.api.get('/organizations');
+                
+                // Ensure allOrgs is an array
+                if (!Array.isArray(allOrgs)) {
+                    throw new Error(`Unexpected response from /organizations endpoint. Expected array, got ${typeof allOrgs}`);
+                }
+                
                 const targetOrg = allOrgs.find(org => org._id === this.options.organizationId);
                 
                 if (!targetOrg) {
@@ -71,13 +76,16 @@ class UsageAnalytics {
                 this.log(`Filtering by organization: ${targetOrg.name}`);
             } else if (this.options.workspaceId) {
                 // If filtering by workspace, we need to find which organization it belongs to
-                const orgsResponse = await this.api.get('/organizations');
-                const allOrgs = orgsResponse.data;
+                const allOrgs = await this.api.get('/organizations');
+                
+                // Ensure allOrgs is an array
+                if (!Array.isArray(allOrgs)) {
+                    throw new Error(`Unexpected response from /organizations endpoint. Expected array, got ${typeof allOrgs}`);
+                }
                 
                 // Find the organization that contains this workspace
                 for (const org of allOrgs) {
-                    const wsResponse = await this.api.get(`/organizations/${org._id}/workspaces`);
-                    const workspaceData = wsResponse.data;
+                    const workspaceData = await this.api.get(`/organizations/${org._id}/workspaces`);
                     
                     // Combine private and shared workspaces
                     let allWorkspaces = [];
@@ -103,8 +111,12 @@ class UsageAnalytics {
                 }
             } else {
                 // Get all organizations
-                const orgsResponse = await this.api.get('/organizations');
-                organizations = orgsResponse.data;
+                organizations = await this.api.get('/organizations');
+                
+                // Ensure organizations is an array
+                if (!Array.isArray(organizations)) {
+                    throw new Error(`Unexpected response from /organizations endpoint. Expected array, got ${typeof organizations}`);
+                }
             }
             
             this.stats.summary.totalOrganizations = organizations.length;
@@ -125,8 +137,7 @@ class UsageAnalytics {
                 
                 // Get workspaces for this organization
                 try {
-                    const wsResponse = await this.api.get(`/organizations/${org._id}/workspaces`);
-                    const workspaceData = wsResponse.data;
+                    const workspaceData = await this.api.get(`/organizations/${org._id}/workspaces`);
                     
                     // Combine private and shared workspaces
                     let workspaces = [];
@@ -185,10 +196,15 @@ class UsageAnalytics {
         
         try {
             // Get projects for this workspace
-            const projectsResponse = await this.api.get(
+            const projects = await this.api.get(
                 `/organizations/${orgId}/workspaces/${workspace._id}/projects`
             );
-            const projects = projectsResponse.data;
+            
+            // Ensure projects is an array
+            if (!Array.isArray(projects)) {
+                this.log(`Warning: Unexpected projects response format for workspace ${workspace.name}`, 'error');
+                return;
+            }
             
             for (const project of projects) {
                 await this.collectProjectStats(orgId, workspace._id, project);
@@ -220,10 +236,15 @@ class UsageAnalytics {
         
         try {
             // Get conversations for this project
-            const conversationsResponse = await this.api.get(
+            const conversations = await this.api.get(
                 `/analyzer/results/${project._id}/conversations`
             );
-            const conversations = conversationsResponse.data;
+            
+            // Ensure conversations is an array
+            if (!Array.isArray(conversations)) {
+                this.log(`Warning: Unexpected conversations response format for project ${projectName}`, 'error');
+                return;
+            }
             
             // Filter conversations by date range
             const filteredConversations = conversations.filter(conv => 
@@ -237,12 +258,12 @@ class UsageAnalytics {
             
             // Get interview questions
             try {
-                const questionsResponse = await this.api.get(
+                const questionsData = await this.api.get(
                     `/analyzer/results/${project._id}/interview_questions`
                 );
                 
                 // API returns questions directly as an array
-                const questions = Array.isArray(questionsResponse.data) ? questionsResponse.data : [];
+                const questions = Array.isArray(questionsData) ? questionsData : [];
                 
                 // Count base questions (just the main questions, no probing)
                 const baseQuestionCount = questions.length;

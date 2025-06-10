@@ -2,7 +2,7 @@
 
 A powerful command-line tool for managing Tellet projects with AI-powered categorization, data export, and comprehensive analytics.
 
-[![Version](https://img.shields.io/badge/version-3.0.0-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-3.0.2-blue.svg)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D14.0.0-brightgreen.svg)](package.json)
 
@@ -80,8 +80,15 @@ TELLET_PASSWORD=your-password
 TELLET_API_URL=https://api.tellet.ai  # Optional
 ```
 
-## 🆕 What's New in v3.0.0
+## 🆕 What's New in v3.0.2
 
+- **Fixed Authentication** - Resolved critical auth issues with API client integration
+- **Enhanced Wizard Display** - Fixed ASCII art and dynamic version loading
+- **Improved API Client** - Better response handling and error messages
+- **Module Compatibility** - Replaced ES modules with CommonJS alternatives
+- **100% Test Coverage** - All tests now passing with updated implementations
+
+### Previous v3.0.0 Features:
 - **Modular Architecture** - Complete rewrite for better maintainability
 - **Enhanced Security** - Token-based authentication (no passwords in CLI args)
 - **Improved Performance** - Optimized API calls and streaming support

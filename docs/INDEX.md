@@ -1,6 +1,6 @@
 # Tellet Admin CLI Documentation
 
-Welcome to the comprehensive documentation for Tellet Admin CLI v3.0.0.
+Welcome to the comprehensive documentation for Tellet Admin CLI v3.0.2.
 
 ## 📚 Documentation Overview
 
@@ -73,4 +73,4 @@ Welcome to the comprehensive documentation for Tellet Admin CLI v3.0.0.
 
 ---
 
-*Last updated: January 2025 | Version: 3.0.0*
+*Last updated: June 2025 | Version: 3.0.2*

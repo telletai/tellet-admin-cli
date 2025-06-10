@@ -10,9 +10,12 @@ async function getProject(api, projectId) {
     // Get project info from analyzer results endpoint
     const resultsResponse = await api.get(`${API_ENDPOINTS.interviewQuestions}/${projectId}/interview_questions`);
     
-    if (resultsResponse.data) {
+    // Check if resultsResponse is the data directly (new APIClient) or wrapped in data property (old axios)
+    const responseData = resultsResponse.data !== undefined ? resultsResponse.data : resultsResponse;
+    
+    if (responseData) {
       // The response is an array of questions directly
-      const questions = Array.isArray(resultsResponse.data) ? resultsResponse.data : [];
+      const questions = Array.isArray(responseData) ? responseData : [];
       
       // Convert the simple format to full format with label
       const interview_questions = questions.map(q => ({
@@ -40,11 +43,12 @@ async function getCategories(api, projectId, questionId) {
     const response = await api.get(`${API_ENDPOINTS.categoriesGet}/${projectId}/question/${questionId}`);
     // The response from getCat has this structure:
     // { conversations_num, last_ran, categories, categories_multi }
-    if (response.data && response.data.categories) {
-      return response.data.categories;
+    const responseData = response.data !== undefined ? response.data : response;
+    if (responseData && responseData.categories) {
+      return responseData.categories;
     }
     // Fallback for array response
-    return Array.isArray(response.data) ? response.data : [];
+    return Array.isArray(responseData) ? responseData : [];
   } catch (error) {
     if (error.response?.status === 404) {
       // No categories found for this question
@@ -61,7 +65,7 @@ async function generateAICategories(api, projectId, questionId) {
     
     // question_id is a query parameter, not body
     const response = await api.post(`${API_ENDPOINTS.categoriesAI}/${projectId}/ai?question_id=${questionId}`);
-    return response.data;
+    return response.data !== undefined ? response.data : response;
   } catch (error) {
     console.error('  ❌ Failed to generate AI categories:', error.response?.data?.message || error.message);
     throw error;
@@ -80,7 +84,7 @@ async function runCategorization(api, projectId, questionId, categories, categor
         color: cat.color,
       })),
     });
-    return response.data;
+    return response.data !== undefined ? response.data : response;
   } catch (error) {
     console.error('  ❌ Failed to run categorization:', error.response?.data?.message || error.message);
     throw error;

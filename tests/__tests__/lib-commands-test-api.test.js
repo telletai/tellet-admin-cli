@@ -26,19 +26,13 @@ describe('test-api command', () => {
   });
 
   it('should test all API endpoints successfully', async () => {
-    // Mock successful responses
+    // Mock successful responses - API returns data directly, not wrapped
     mockApi.get
-      .mockResolvedValueOnce({ 
-        data: [{ _id: 'org1', name: 'Test Organization' }]
-      })
-      .mockResolvedValueOnce({ 
-        data: [{ _id: 'org1', name: 'Test Organization' }]
-      })
+      .mockResolvedValueOnce([{ _id: 'org1', name: 'Test Organization' }])
+      .mockResolvedValueOnce([{ _id: 'org1', name: 'Test Organization' }])
       .mockResolvedValueOnce({
-        data: {
-          priv: [{ _id: 'ws1', name: 'Private Workspace' }],
-          shared: [{ _id: 'ws2', name: 'Shared Workspace' }]
-        }
+        priv: [{ _id: 'ws1', name: 'Private Workspace' }],
+        shared: [{ _id: 'ws2', name: 'Shared Workspace' }]
       });
     
     await testApiHandler({ api: mockApi });
@@ -62,22 +56,23 @@ describe('test-api command', () => {
     expect(logger.fail).toHaveBeenCalledWith('✗ Organizations: Network error');
   });
 
-  it('should handle user info endpoint failure', async () => {
+  it('should handle empty organizations list', async () => {
     mockApi.get
-      .mockResolvedValueOnce({ data: [] })
-      .mockResolvedValueOnce({ data: [] })
-      .mockRejectedValueOnce(new Error('Unauthorized'));
+      .mockResolvedValueOnce([])  // empty organizations
+      .mockResolvedValueOnce([]);
     
     await testApiHandler({ api: mockApi });
     
-    // Since we removed user info test, this test now checks workspace failure
     expect(logger.success).toHaveBeenCalledWith('✓ Organizations: Found 0 organization(s)');
+    expect(logger.success).toHaveBeenCalledWith('✓ Authentication: Token is valid and working');
+    // No workspace test when no orgs
+    expect(mockApi.get).toHaveBeenCalledTimes(2);  // Only org calls
   });
 
   it('should handle workspace endpoint failure', async () => {
     mockApi.get
-      .mockResolvedValueOnce({ data: [{ _id: 'org1', name: 'Test Org' }] })
-      .mockResolvedValueOnce({ data: [{ _id: 'org1', name: 'Test Org' }] })
+      .mockResolvedValueOnce([{ _id: 'org1', name: 'Test Org' }])
+      .mockResolvedValueOnce([{ _id: 'org1', name: 'Test Org' }])
       .mockRejectedValueOnce(new Error('Forbidden'));
     
     await testApiHandler({ api: mockApi });
@@ -97,7 +92,7 @@ describe('test-api command', () => {
 
   it('should handle empty organizations', async () => {
     mockApi.get
-      .mockResolvedValueOnce({ data: [] })  // First /organizations call
+      .mockResolvedValueOnce([])  // First /organizations call
       .mockResolvedValueOnce({ data: [] });  // Second /organizations call for workspaces check
     
     await testApiHandler({ api: mockApi });

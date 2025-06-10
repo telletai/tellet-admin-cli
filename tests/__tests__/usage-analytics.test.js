@@ -113,10 +113,10 @@ describe('UsageAnalytics', () => {
     beforeEach(() => {
       mockApi.get.mockImplementation((url) => {
         if (url === '/organizations') {
-          return Promise.resolve({ data: mockOrgs });
+          return Promise.resolve(mockOrgs);  // API returns data directly
         }
         if (url.includes('/workspaces')) {
-          return Promise.resolve({ data: mockWorkspaces });
+          return Promise.resolve(mockWorkspaces);  // API returns data directly
         }
         return Promise.reject(new Error('Unknown endpoint'));
       });
@@ -215,10 +215,10 @@ describe('UsageAnalytics', () => {
 
       mockApi.get.mockImplementation((url) => {
         if (url.includes('/conversations')) {
-          return Promise.resolve({ data: mockConversations });
+          return Promise.resolve(mockConversations);  // API returns data directly
         }
         if (url.includes('/interview_questions')) {
-          return Promise.resolve({ data: mockQuestions });
+          return Promise.resolve(mockQuestions);  // API returns data directly
         }
         return Promise.reject(new Error('Unknown endpoint'));
       });
@@ -249,7 +249,7 @@ describe('UsageAnalytics', () => {
     it('should handle missing interview questions', async () => {
       mockApi.get.mockImplementation((url) => {
         if (url.includes('/conversations')) {
-          return Promise.resolve({ data: mockConversations });
+          return Promise.resolve(mockConversations);  // API returns data directly
         }
         if (url.includes('/interview_questions')) {
           return Promise.reject(new Error('Not found'));

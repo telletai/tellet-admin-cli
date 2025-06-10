@@ -203,6 +203,16 @@ describe('AuthManager', () => {
   });
 });
 
+// Mock the createAPIClient function
+jest.mock('../../lib/api', () => ({
+  createAPIClient: jest.fn(() => ({
+    setAuthToken: jest.fn(),
+    config: { baseURL: 'https://api.tellet.ai' }
+  }))
+}));
+
+const { createAPIClient } = require('../../lib/api');
+
 describe('requireAuth', () => {
   it('should wrap async function with authentication', async () => {
     const mockToken = 'test-token';
