@@ -43,7 +43,7 @@
     "format": "prettier --write '**/*.{js,json,md}'",
     "format:check": "prettier --check '**/*.{js,json,md}'",
     "validate": "npm run lint && npm run format:check && npm run test",
-    "postinstall": "node -e \"console.log('\\n🎉 Tellet Admin CLI installed successfully!\\nRun \\'tellet-wizard\\' to get started.\\n')\""
+    "postinstall": "node -e \"console.log('\\n🎉 Tellet Admin CLI installed successfully!\\nRun \\'tellet-wizard\\' to get started.\\n\\nFor updates, run: npm update -g git+https://github.com/telletai/tellet-admin-cli.git\\n')\""
   },
   "dependencies": {
     "axios": "^1.6.0",

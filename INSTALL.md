@@ -1,36 +1,66 @@
 # Installing Tellet Admin CLI
 
-## Installation
+## Installation Methods
 
-Install the Tellet Admin CLI from npm:
+### Method 1: Using Install Script (Recommended)
 
+The easiest way to install is using our install script:
+
+**macOS/Linux:**
 ```bash
-# Install globally (recommended)
-npm install -g @tellet/admin-cli
-
-# Or install a specific version
-npm install -g @tellet/admin-cli@3.0.0
+curl -fsSL https://raw.githubusercontent.com/telletai/tellet-admin-cli/main/install.sh | bash
 ```
 
-For development or latest features from GitHub:
+**Windows:**
+```cmd
+# Download install.cmd from the repository and run it
+# Or use PowerShell:
+powershell -Command "Invoke-WebRequest -Uri https://raw.githubusercontent.com/telletai/tellet-admin-cli/main/install.cmd -OutFile install.cmd; .\install.cmd"
+```
+
+### Method 2: Direct Installation from GitHub
+
 ```bash
+# Install latest version (recommended)
 npm install -g git+https://github.com/telletai/tellet-admin-cli.git
+
+# Install a specific version/tag
+npm install -g git+https://github.com/telletai/tellet-admin-cli.git#v3.0.2
+
+# Install from a specific branch
+npm install -g git+https://github.com/telletai/tellet-admin-cli.git#main
 ```
 
 ## Updating
 
-To update to the latest version:
-
+### Option 1: Using the Install Script
 ```bash
-# Using the built-in updater
-tellet-admin update
+# The install script will detect existing installation and offer to update
+curl -fsSL https://raw.githubusercontent.com/telletai/tellet-admin-cli/main/install.sh | bash
+```
 
-# Or manually with npm
+### Option 2: Using Built-in Updater
+```bash
+tellet-admin update
+```
+
+### Option 3: Manual Update
+```bash
+# Update to latest version
 npm update -g git+https://github.com/telletai/tellet-admin-cli.git
 
-# Or reinstall
+# Or reinstall (more reliable)
 npm uninstall -g tellet-admin-cli
 npm install -g git+https://github.com/telletai/tellet-admin-cli.git
+```
+
+## Verifying Installation
+
+```bash
+# Check if installed
+tellet-admin --version
+
+# Should output: 3.0.2 (or current version)
 ```
 
 ## Quick Start

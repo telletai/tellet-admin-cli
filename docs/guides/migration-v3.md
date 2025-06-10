@@ -100,14 +100,17 @@ npm uninstall -g tellet-admin-cli
 npm uninstall tellet-admin-cli
 ```
 
-### Step 3: Install v3.0.0
+### Step 3: Install v3.0.0+
 
 ```bash
-# Install new version
-npm install -g @tellet/admin-cli
+# Install latest version from GitHub
+npm install -g git+https://github.com/telletai/tellet-admin-cli.git
+
+# Or use the install script
+curl -fsSL https://raw.githubusercontent.com/telletai/tellet-admin-cli/main/install.sh | bash
 
 # Verify installation
-tellet-admin --version  # Should show 3.0.0
+tellet-admin --version  # Should show 3.0.2 or later
 ```
 
 ### Step 4: Update Credentials

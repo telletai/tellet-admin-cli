@@ -10,33 +10,42 @@ This guide covers all installation methods for the Tellet Admin CLI tool.
 
 ## Installation Methods
 
-### 1. NPM Installation (Recommended)
+### 1. Install Script (Recommended)
 
-The easiest way to install the Tellet Admin CLI is via npm:
+The easiest way to install is using our automated install script:
 
+**macOS/Linux:**
 ```bash
-# Install globally
-npm install -g @tellet/admin-cli
-
-# Verify installation
-tellet-admin --version
+curl -fsSL https://raw.githubusercontent.com/telletai/tellet-admin-cli/main/install.sh | bash
 ```
 
-See [NPM Installation Guide](npm.md) for detailed instructions.
+**Windows:**
+```cmd
+# Download and run install.cmd
+curl -o install.cmd https://raw.githubusercontent.com/telletai/tellet-admin-cli/main/install.cmd
+install.cmd
+```
 
-### 2. GitHub Installation
+The script will:
+- Check for Node.js/npm prerequisites
+- Install or update the CLI tool
+- Verify the installation
+- Provide next steps
 
-For development or to get the latest unreleased features:
+### 2. Direct GitHub Installation
+
+Install directly from our GitHub repository:
 
 ```bash
-# Install from GitHub
+# Install latest version
 npm install -g git+https://github.com/telletai/tellet-admin-cli.git
 
-# Install specific branch
-npm install -g git+https://github.com/telletai/tellet-admin-cli.git#branch-name
-```
+# Install specific version
+npm install -g git+https://github.com/telletai/tellet-admin-cli.git#v3.0.2
 
-See [GitHub Installation Guide](github.md) for more details.
+# Install from branch
+npm install -g git+https://github.com/telletai/tellet-admin-cli.git#main
+```
 
 ## Post-Installation Setup
 
@@ -91,11 +100,14 @@ tellet-admin list-orgs
 To update to the latest version:
 
 ```bash
-# Update via npm
-npm update -g @tellet/admin-cli
+# Method 1: Run install script again
+curl -fsSL https://raw.githubusercontent.com/telletai/tellet-admin-cli/main/install.sh | bash
 
-# Check for updates
+# Method 2: Built-in updater
 tellet-admin update
+
+# Method 3: npm update from GitHub
+npm update -g git+https://github.com/telletai/tellet-admin-cli.git
 ```
 
 ## Troubleshooting

@@ -18,10 +18,26 @@ A powerful command-line tool for managing Tellet projects with AI-powered catego
 
 ## 🚀 Quick Start
 
+### Option 1: Install Script (Recommended)
 ```bash
-# Install globally
-npm install -g @tellet/admin-cli
+# macOS/Linux
+curl -fsSL https://raw.githubusercontent.com/telletai/tellet-admin-cli/main/install.sh | bash
 
+# Windows
+# Download and run install.cmd from the repository
+```
+
+### Option 2: Direct Installation from GitHub
+```bash
+# Install latest version
+npm install -g git+https://github.com/telletai/tellet-admin-cli.git
+
+# Install specific version
+npm install -g git+https://github.com/telletai/tellet-admin-cli.git#v3.0.2
+```
+
+### After Installation
+```bash
 # Launch interactive wizard
 tellet-wizard
 

@@ -4,8 +4,19 @@ Get up and running with Tellet Admin CLI in 5 minutes!
 
 ## 1. Installation
 
+### Fastest Method: Use Install Script
 ```bash
-npm install -g @tellet/admin-cli
+# macOS/Linux
+curl -fsSL https://raw.githubusercontent.com/telletai/tellet-admin-cli/main/install.sh | bash
+
+# Windows - run in Command Prompt
+curl -o install.cmd https://raw.githubusercontent.com/telletai/tellet-admin-cli/main/install.cmd && install.cmd
+```
+
+### Alternative: Direct npm Install
+```bash
+# Install latest version from GitHub
+npm install -g git+https://github.com/telletai/tellet-admin-cli.git
 ```
 
 ## 2. Setup Credentials
