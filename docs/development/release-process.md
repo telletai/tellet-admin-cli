@@ -2,6 +2,21 @@
 
 This document describes how to create and publish releases for the Tellet Admin CLI.
 
+## Release Notes Organization
+
+Starting with v3.0.3, release notes are organized in the `releases/` directory:
+```
+releases/
+├── README.md           # Index of all releases
+├── RELEASE_TEMPLATE.md # Template for new releases
+├── v3.0.3.md          # Individual release notes
+├── v3.0.2.md
+├── v3.0.1.md
+└── v3.0.0.md
+```
+
+Each release should have comprehensive notes following the template.
+
 ## Prerequisites
 
 - GitHub CLI (`gh`) installed and authenticated
@@ -11,6 +26,37 @@ This document describes how to create and publish releases for the Tellet Admin 
 - Node.js and npm installed
 
 ## Creating a New Release
+
+### Complete Release Checklist
+
+1. **Pre-Release Checks**
+   - [ ] All tests passing (`npm test`)
+   - [ ] Code linted (`npm run lint`)
+   - [ ] Documentation updated
+   - [ ] CHANGELOG.md prepared
+
+2. **Version Updates**
+   - [ ] Update version in `package.json`
+   - [ ] Update version references in:
+     - `README.md` (badge and installation examples)
+     - `INSTALL.md` (version examples)
+     - `docs/INDEX.md` (header and footer)
+     - `docs/installation/README.md`
+     - `docs/guides/migration-v3.md`
+
+3. **Release Notes**
+   - [ ] Create release notes: `cp releases/RELEASE_TEMPLATE.md releases/vX.X.X.md`
+   - [ ] Fill in all sections of release notes
+   - [ ] Update `releases/README.md` with new version link
+   - [ ] Update CHANGELOG.md with summary
+
+4. **Git Operations**
+   - [ ] Commit all changes
+   - [ ] Create annotated tag: `git tag -a vX.X.X -m "Release version X.X.X"`
+   - [ ] Push commits and tag
+
+5. **GitHub Release**
+   - [ ] Create GitHub release using release notes
 
 ### 1. Automatic Release (Recommended)
 
@@ -79,31 +125,21 @@ This is useful for:
 
 ## Release Notes Format
 
-Release notes should include:
+Use the template in `releases/RELEASE_TEMPLATE.md`. Key sections:
 
-1. **What's New** - Major features or changes
-2. **Installation** - How to install this version
-3. **Bug Fixes** - Fixed issues
-4. **Breaking Changes** - Any backwards compatibility issues
-5. **Documentation** - Link to README
+1. **Release Header** - Version, date, type
+2. **Release Title** - Brief, descriptive title with emoji
+3. **What's Changed** - Organized by category:
+   - Features
+   - Bug Fixes  
+   - Documentation
+   - Breaking Changes
+4. **Installation & Update** - Clear instructions
+5. **Migration Guide** - If applicable
+6. **Known Issues** - Transparency about limitations
+7. **Contributors** - Credit where due
 
-Example:
-```markdown
-## What's New in v2.5.2
-
-### Features
-- Added support for bulk metadata updates
-- Improved error messages for API failures
-
-### Bug Fixes
-- Fixed update checker for GitHub releases
-- Resolved issue with CSV export formatting
-
-### Installation
-\`\`\`bash
-npm install -g git+https://github.com/telletai/tellet-admin-cli.git
-\`\`\`
-```
+See existing releases in `releases/` directory for examples.
 
 ## Version Numbering
 
