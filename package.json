@@ -1,6 +1,6 @@
 {
   "name": "@tellet/admin-cli",
-  "version": "3.0.2",
+  "version": "3.0.3",
   "description": "Powerful command-line tool for managing Tellet projects - auto-categorization, data export, media downloads, usage analytics, and more",
   "keywords": [
     "tellet",

@@ -41,7 +41,7 @@ Install directly from our GitHub repository:
 npm install -g git+https://github.com/telletai/tellet-admin-cli.git
 
 # Install specific version
-npm install -g git+https://github.com/telletai/tellet-admin-cli.git#v3.0.2
+npm install -g git+https://github.com/telletai/tellet-admin-cli.git#v3.0.3
 
 # Install from branch
 npm install -g git+https://github.com/telletai/tellet-admin-cli.git#main

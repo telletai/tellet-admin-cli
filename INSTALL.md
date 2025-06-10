@@ -25,7 +25,7 @@ powershell -Command "Invoke-WebRequest -Uri https://raw.githubusercontent.com/te
 npm install -g git+https://github.com/telletai/tellet-admin-cli.git
 
 # Install a specific version/tag
-npm install -g git+https://github.com/telletai/tellet-admin-cli.git#v3.0.2
+npm install -g git+https://github.com/telletai/tellet-admin-cli.git#v3.0.3
 
 # Install from a specific branch
 npm install -g git+https://github.com/telletai/tellet-admin-cli.git#main
@@ -60,7 +60,7 @@ npm install -g git+https://github.com/telletai/tellet-admin-cli.git
 # Check if installed
 tellet-admin --version
 
-# Should output: 3.0.2 (or current version)
+# Should output: 3.0.3 (or current version)
 ```
 
 ## Quick Start

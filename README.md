@@ -2,7 +2,7 @@
 
 A powerful command-line tool for managing Tellet projects with AI-powered categorization, data export, and comprehensive analytics.
 
-[![Version](https://img.shields.io/badge/version-3.0.2-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-3.0.3-blue.svg)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D14.0.0-brightgreen.svg)](package.json)
 
@@ -33,7 +33,7 @@ curl -fsSL https://raw.githubusercontent.com/telletai/tellet-admin-cli/main/inst
 npm install -g git+https://github.com/telletai/tellet-admin-cli.git
 
 # Install specific version
-npm install -g git+https://github.com/telletai/tellet-admin-cli.git#v3.0.2
+npm install -g git+https://github.com/telletai/tellet-admin-cli.git#v3.0.3
 ```
 
 ### After Installation
@@ -96,8 +96,14 @@ TELLET_PASSWORD=your-password
 TELLET_API_URL=https://api.tellet.ai  # Optional
 ```
 
-## 🆕 What's New in v3.0.2
+## 🆕 What's New in v3.0.3
 
+- **Updated Installation Documentation** - All instructions now use GitHub URLs instead of npm registry
+- **Windows Installation Support** - Added dedicated PowerShell installation commands
+- **Simplified Install Process** - Install script method now recommended for all platforms
+- **Migration Guide Updates** - Reflects GitHub-based installation process
+
+### Previous v3.0.2 Features:
 - **Fixed Authentication** - Resolved critical auth issues with API client integration
 - **Enhanced Wizard Display** - Fixed ASCII art and dynamic version loading
 - **Improved API Client** - Better response handling and error messages

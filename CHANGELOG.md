@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.3] - 2025-06-10
+
+### 📚 Documentation Release
+
+This patch release updates all installation instructions to reflect the GitHub-based distribution model.
+
+### Documentation
+- **Installation Instructions**: Completely updated to use GitHub URLs instead of npm registry
+  - Replaced all `@tellet/admin-cli` references with GitHub repository URLs
+  - Added Windows-specific installation commands with PowerShell support
+  - Prioritized install script method as the recommended approach
+- **Migration Guide**: Updated to reflect GitHub installation process
+- **Quick Start Guide**: Enhanced with GitHub-based installation instructions
+- **CLI Update Command**: Fixed to show GitHub URL instead of npm registry
+- **Package.json**: Updated postinstall message with correct GitHub update command
+
+### Changed
+- All documentation now correctly reflects that the tool is distributed via GitHub, not the npm registry
+- Installation instructions reorganized to prioritize the install script method
+- Added clearer platform-specific installation guidance
+
 ## [3.0.2] - 2025-06-10
 
 ### 🔧 Maintenance Release

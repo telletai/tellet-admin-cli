@@ -110,7 +110,7 @@ npm install -g git+https://github.com/telletai/tellet-admin-cli.git
 curl -fsSL https://raw.githubusercontent.com/telletai/tellet-admin-cli/main/install.sh | bash
 
 # Verify installation
-tellet-admin --version  # Should show 3.0.2 or later
+tellet-admin --version  # Should show 3.0.3 or later
 ```
 
 ### Step 4: Update Credentials
