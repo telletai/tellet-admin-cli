@@ -24,7 +24,9 @@ class UsageAnalytics {
                 totalWorkspaces: 0,
                 totalProjects: 0,
                 totalConversations: 0,
-                totalDigestedConversations: 0,
+                completedConversations: 0,
+                abandonedConversations: 0,
+                inProgressConversations: 0,
                 totalQuestions: 0,
                 totalQuestionsWithProbing: 0
             }
@@ -130,7 +132,9 @@ class UsageAnalytics {
                     workspaces: [],
                     totalProjects: 0,
                     totalConversations: 0,
-                    totalDigestedConversations: 0,
+                    completedConversations: 0,
+                    abandonedConversations: 0,
+                    inProgressConversations: 0,
                     totalQuestions: 0,
                     totalQuestionsWithProbing: 0
                 };
@@ -186,7 +190,9 @@ class UsageAnalytics {
             projects: [],
             totalProjects: 0,
             totalConversations: 0,
-            totalDigestedConversations: 0,
+            completedConversations: 0,
+            abandonedConversations: 0,
+            inProgressConversations: 0,
             totalQuestions: 0,
             totalQuestionsWithProbing: 0
         };
@@ -227,7 +233,9 @@ class UsageAnalytics {
             workspaceId: workspaceId,
             workspaceName: this.stats.workspaces[workspaceId].name,
             conversations: 0,
-            digestedConversations: 0,
+            completedConversations: 0,
+            abandonedConversations: 0,
+            inProgressConversations: 0,
             questions: 0,
             questionsWithProbing: 0,
             createdAt: project.createdAt,
@@ -251,44 +259,52 @@ class UsageAnalytics {
                 this.isWithinDateRange(conv.createdAt || conv.updatedAt)
             );
             
-            projectStats.conversations = filteredConversations.length;
-            projectStats.digestedConversations = filteredConversations.filter(
+            // Count conversations by status
+            projectStats.completedConversations = filteredConversations.filter(
                 conv => conv.status === 'digested'
             ).length;
+            projectStats.abandonedConversations = filteredConversations.filter(
+                conv => conv.status === 'abandoned'
+            ).length;
+            projectStats.inProgressConversations = filteredConversations.filter(
+                conv => conv.status === 'in_progress'
+            ).length;
+            projectStats.conversations = projectStats.completedConversations + 
+                                        projectStats.abandonedConversations + 
+                                        projectStats.inProgressConversations;
             
-            // Get interview questions
+            // Get project details with interview questions including follow_up_questions
             try {
-                const questionsData = await this.api.get(
-                    `/analyzer/results/${project._id}/interview_questions`
+                // Use dashboard endpoint to get full project data including follow_up_question field
+                const projectData = await this.api.get(
+                    `/organizations/${orgId}/workspaces/${workspaceId}/projects/${project._id}`
                 );
                 
-                // API returns questions directly as an array
-                const questions = Array.isArray(questionsData) ? questionsData : [];
+                const questions = projectData.interview_questions || [];
                 
                 // Count base questions (just the main questions, no probing)
                 const baseQuestionCount = questions.length;
                 
-                // Count total questions per conversation (main + probing)
-                let questionsPerConversation = 0;
-                for (const question of questions) {
-                    // Count the main question
-                    questionsPerConversation++;
-                    
-                    // Add probing questions if they exist
-                    if (question.probingQuestions && Array.isArray(question.probingQuestions)) {
-                        questionsPerConversation += question.probingQuestions.length;
-                    }
-                }
+                // Calculate total follow-up questions
+                const totalFollowUpQuestions = questions.reduce((sum, q) => {
+                    // Ensure follow_up_question is treated as a number
+                    const followUpCount = parseInt(q.follow_up_question) || 0;
+                    return sum + followUpCount;
+                }, 0);
                 
-                // Calculate total questions across all conversations
-                // Total Questions = base questions × number of conversations
-                projectStats.questions = baseQuestionCount * filteredConversations.length;
+                this.log(`Project ${projectName}: ${baseQuestionCount} base questions, ${totalFollowUpQuestions} follow-up questions`);
                 
-                // Questions with Probing = total questions per conversation × number of conversations
-                projectStats.questionsWithProbing = questionsPerConversation * filteredConversations.length;
+                // Calculate total questions across all COMPLETED conversations
+                // Only count questions for conversations that completed the interview
+                
+                // Total Questions = base questions × number of completed conversations
+                projectStats.questions = baseQuestionCount * projectStats.completedConversations;
+                
+                // Total Questions with Probing = (base questions + follow-up questions) × number of completed conversations
+                projectStats.questionsWithProbing = (baseQuestionCount + totalFollowUpQuestions) * projectStats.completedConversations;
                 
             } catch (error) {
-                this.log(`Failed to get questions for ${projectName}: ${error.message}`, 'error');
+                this.log(`Failed to get project details for ${projectName}: ${error.message}`, 'error');
             }
             
         } catch (error) {
@@ -300,19 +316,25 @@ class UsageAnalytics {
         this.stats.workspaces[workspaceId].projects.push(project._id);
         this.stats.workspaces[workspaceId].totalProjects++;
         this.stats.workspaces[workspaceId].totalConversations += projectStats.conversations;
-        this.stats.workspaces[workspaceId].totalDigestedConversations += projectStats.digestedConversations;
+        this.stats.workspaces[workspaceId].completedConversations += projectStats.completedConversations;
+        this.stats.workspaces[workspaceId].abandonedConversations += projectStats.abandonedConversations;
+        this.stats.workspaces[workspaceId].inProgressConversations += projectStats.inProgressConversations;
         this.stats.workspaces[workspaceId].totalQuestions += projectStats.questions;
         this.stats.workspaces[workspaceId].totalQuestionsWithProbing += projectStats.questionsWithProbing;
         
         this.stats.organizations[orgId].totalProjects++;
         this.stats.organizations[orgId].totalConversations += projectStats.conversations;
-        this.stats.organizations[orgId].totalDigestedConversations += projectStats.digestedConversations;
+        this.stats.organizations[orgId].completedConversations += projectStats.completedConversations;
+        this.stats.organizations[orgId].abandonedConversations += projectStats.abandonedConversations;
+        this.stats.organizations[orgId].inProgressConversations += projectStats.inProgressConversations;
         this.stats.organizations[orgId].totalQuestions += projectStats.questions;
         this.stats.organizations[orgId].totalQuestionsWithProbing += projectStats.questionsWithProbing;
         
         this.stats.summary.totalProjects++;
         this.stats.summary.totalConversations += projectStats.conversations;
-        this.stats.summary.totalDigestedConversations += projectStats.digestedConversations;
+        this.stats.summary.completedConversations += projectStats.completedConversations;
+        this.stats.summary.abandonedConversations += projectStats.abandonedConversations;
+        this.stats.summary.inProgressConversations += projectStats.inProgressConversations;
         this.stats.summary.totalQuestions += projectStats.questions;
         this.stats.summary.totalQuestionsWithProbing += projectStats.questionsWithProbing;
     }
@@ -392,8 +414,10 @@ class UsageAnalytics {
                 { id: 'name', title: 'Organization' },
                 { id: 'totalWorkspaces', title: 'Workspaces' },
                 { id: 'totalProjects', title: 'Projects' },
+                { id: 'completedConversations', title: 'Completed Conversations' },
+                { id: 'abandonedConversations', title: 'Abandoned Conversations' },
+                { id: 'inProgressConversations', title: 'In Progress Conversations' },
                 { id: 'totalConversations', title: 'Total Conversations' },
-                { id: 'totalDigestedConversations', title: 'Digested Conversations' },
                 { id: 'completionRate', title: 'Completion Rate (%)' },
                 { id: 'totalQuestions', title: 'Total Questions Asked' },
                 { id: 'totalQuestionsWithProbing', title: 'Total Questions (incl. Probing)' }
@@ -404,10 +428,12 @@ class UsageAnalytics {
             name: org.name,
             totalWorkspaces: org.workspaces.length,
             totalProjects: org.totalProjects,
+            completedConversations: org.completedConversations,
+            abandonedConversations: org.abandonedConversations,
+            inProgressConversations: org.inProgressConversations,
             totalConversations: org.totalConversations,
-            totalDigestedConversations: org.totalDigestedConversations,
             completionRate: org.totalConversations > 0 ? 
-                ((org.totalDigestedConversations / org.totalConversations) * 100).toFixed(1) : '0.0',
+                ((org.completedConversations / org.totalConversations) * 100).toFixed(1) : '0.0',
             totalQuestions: org.totalQuestions,
             totalQuestionsWithProbing: org.totalQuestionsWithProbing
         }));
@@ -422,8 +448,10 @@ class UsageAnalytics {
                 { id: 'organizationName', title: 'Organization' },
                 { id: 'name', title: 'Workspace' },
                 { id: 'totalProjects', title: 'Projects' },
+                { id: 'completedConversations', title: 'Completed Conversations' },
+                { id: 'abandonedConversations', title: 'Abandoned Conversations' },
+                { id: 'inProgressConversations', title: 'In Progress Conversations' },
                 { id: 'totalConversations', title: 'Total Conversations' },
-                { id: 'totalDigestedConversations', title: 'Digested Conversations' },
                 { id: 'completionRate', title: 'Completion Rate (%)' },
                 { id: 'totalQuestions', title: 'Total Questions Asked' },
                 { id: 'totalQuestionsWithProbing', title: 'Total Questions (incl. Probing)' }
@@ -434,10 +462,12 @@ class UsageAnalytics {
             organizationName: ws.organizationName,
             name: ws.name,
             totalProjects: ws.totalProjects,
+            completedConversations: ws.completedConversations,
+            abandonedConversations: ws.abandonedConversations,
+            inProgressConversations: ws.inProgressConversations,
             totalConversations: ws.totalConversations,
-            totalDigestedConversations: ws.totalDigestedConversations,
             completionRate: ws.totalConversations > 0 ? 
-                ((ws.totalDigestedConversations / ws.totalConversations) * 100).toFixed(1) : '0.0',
+                ((ws.completedConversations / ws.totalConversations) * 100).toFixed(1) : '0.0',
             totalQuestions: ws.totalQuestions,
             totalQuestionsWithProbing: ws.totalQuestionsWithProbing
         }));
@@ -453,8 +483,10 @@ class UsageAnalytics {
                 { id: 'workspaceName', title: 'Workspace' },
                 { id: 'name', title: 'Project' },
                 { id: 'status', title: 'Status' },
+                { id: 'completedConversations', title: 'Completed Conversations' },
+                { id: 'abandonedConversations', title: 'Abandoned Conversations' },
+                { id: 'inProgressConversations', title: 'In Progress Conversations' },
                 { id: 'conversations', title: 'Total Conversations' },
-                { id: 'digestedConversations', title: 'Digested Conversations' },
                 { id: 'completionRate', title: 'Completion Rate (%)' },
                 { id: 'questions', title: 'Total Questions Asked' },
                 { id: 'questionsWithProbing', title: 'Total Questions (incl. Probing)' },
@@ -468,10 +500,12 @@ class UsageAnalytics {
             workspaceName: project.workspaceName,
             name: project.name,
             status: project.status,
+            completedConversations: project.completedConversations,
+            abandonedConversations: project.abandonedConversations,
+            inProgressConversations: project.inProgressConversations,
             conversations: project.conversations,
-            digestedConversations: project.digestedConversations,
             completionRate: project.conversations > 0 ? 
-                ((project.digestedConversations / project.conversations) * 100).toFixed(1) : '0.0',
+                ((project.completedConversations / project.conversations) * 100).toFixed(1) : '0.0',
             questions: project.questions,
             questionsWithProbing: project.questionsWithProbing,
             createdAt: new Date(project.createdAt).toLocaleDateString(),
@@ -508,27 +542,32 @@ class UsageAnalytics {
         console.log(chalk.white(`Organizations:           ${chalk.bold(this.stats.summary.totalOrganizations)}`));
         console.log(chalk.white(`Workspaces:              ${chalk.bold(this.stats.summary.totalWorkspaces)}`));
         console.log(chalk.white(`Projects:                ${chalk.bold(this.stats.summary.totalProjects)}`));
+        console.log(chalk.blue('─'.repeat(60)));
+        console.log(chalk.white(`Completed Conversations: ${chalk.bold(this.stats.summary.completedConversations)}`));
+        console.log(chalk.white(`Abandoned Conversations: ${chalk.bold(this.stats.summary.abandonedConversations)}`));
+        console.log(chalk.white(`In Progress:             ${chalk.bold(this.stats.summary.inProgressConversations)}`));
         console.log(chalk.white(`Total Conversations:     ${chalk.bold(this.stats.summary.totalConversations)}`));
-        console.log(chalk.white(`Digested Conversations:  ${chalk.bold(this.stats.summary.totalDigestedConversations)}`));
         
         const completionRate = this.stats.summary.totalConversations > 0 ?
-            ((this.stats.summary.totalDigestedConversations / this.stats.summary.totalConversations) * 100).toFixed(1) :
+            ((this.stats.summary.completedConversations / this.stats.summary.totalConversations) * 100).toFixed(1) :
             '0.0';
         console.log(chalk.white(`Completion Rate:         ${chalk.bold(completionRate + '%')}`));
-        
+        console.log(chalk.blue('─'.repeat(60)));
         console.log(chalk.white(`Total Questions Asked:   ${chalk.bold(this.stats.summary.totalQuestions)}`));
         console.log(chalk.white(`Including Probing:       ${chalk.bold(this.stats.summary.totalQuestionsWithProbing)}`));
         
         console.log(chalk.blue('═'.repeat(60)) + '\n');
         
         // Top organizations by conversations
-        console.log(chalk.yellow.bold('🏆 Top Organizations by Conversations:'));
+        console.log(chalk.yellow.bold('🏆 Top Organizations by Completed Conversations:'));
         const topOrgs = Object.values(this.stats.organizations)
-            .sort((a, b) => b.totalConversations - a.totalConversations)
+            .sort((a, b) => b.completedConversations - a.completedConversations)
             .slice(0, 5);
         
         topOrgs.forEach((org, index) => {
-            console.log(`   ${index + 1}. ${org.name}: ${org.totalConversations} conversations`);
+            const rate = org.totalConversations > 0 ? 
+                ((org.completedConversations / org.totalConversations) * 100).toFixed(1) : '0.0';
+            console.log(`   ${index + 1}. ${org.name}: ${org.completedConversations} completed (${rate}% completion rate)`);
         });
         
         console.log('');

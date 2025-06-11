@@ -179,13 +179,19 @@ describe('UsageAnalytics', () => {
     const mockConversations = [
       { _id: 'conv1', status: 'digested', createdAt: '2025-02-01' },
       { _id: 'conv2', status: 'digested', createdAt: '2025-03-01' },
-      { _id: 'conv3', status: 'abandoned', createdAt: '2025-04-01' }
+      { _id: 'conv3', status: 'abandoned', createdAt: '2025-04-01' },
+      { _id: 'conv4', status: 'in_progress', createdAt: '2025-04-15' }
     ];
 
-    const mockQuestions = [
-      { id: 'q1', question: 'Question 1', probingQuestions: ['p1', 'p2'] },
-      { id: 'q2', question: 'Question 2' }
-    ];
+    const mockProjectData = {
+      _id: 'proj1',
+      title: 'Test Project',
+      status: 'PUBLISHED',
+      interview_questions: [
+        { id: 'q1', question: 'Question 1', follow_up_question: 2 },
+        { id: 'q2', question: 'Question 2', follow_up_question: 1 }
+      ]
+    };
 
     beforeEach(() => {
       // Initialize required parent structures
@@ -195,7 +201,9 @@ describe('UsageAnalytics', () => {
         workspaces: ['ws1'],
         totalProjects: 0,
         totalConversations: 0,
-        totalDigestedConversations: 0,
+        completedConversations: 0,
+        abandonedConversations: 0,
+        inProgressConversations: 0,
         totalQuestions: 0,
         totalQuestionsWithProbing: 0
       };
@@ -208,7 +216,9 @@ describe('UsageAnalytics', () => {
         projects: [],
         totalProjects: 0,
         totalConversations: 0,
-        totalDigestedConversations: 0,
+        completedConversations: 0,
+        abandonedConversations: 0,
+        inProgressConversations: 0,
         totalQuestions: 0,
         totalQuestionsWithProbing: 0
       };
@@ -217,8 +227,8 @@ describe('UsageAnalytics', () => {
         if (url.includes('/conversations')) {
           return Promise.resolve(mockConversations);  // API returns data directly
         }
-        if (url.includes('/interview_questions')) {
-          return Promise.resolve(mockQuestions);  // API returns data directly
+        if (url.includes('/projects/proj1')) {
+          return Promise.resolve(mockProjectData);  // API returns project data with interview_questions
         }
         return Promise.reject(new Error('Unknown endpoint'));
       });
@@ -231,18 +241,21 @@ describe('UsageAnalytics', () => {
       
       expect(projectStats).toBeDefined();
       expect(projectStats.name).toBe('Test Project');
-      expect(projectStats.conversations).toBe(3);
-      expect(projectStats.digestedConversations).toBe(2);
-      expect(projectStats.questions).toBe(2 * 3); // 2 questions × 3 conversations
-      expect(projectStats.questionsWithProbing).toBe(4 * 3); // (2 + 2 probing) × 3 conversations
+      expect(projectStats.conversations).toBe(4);
+      expect(projectStats.completedConversations).toBe(2);
+      expect(projectStats.abandonedConversations).toBe(1);
+      expect(projectStats.inProgressConversations).toBe(1);
+      expect(projectStats.questions).toBe(2 * 2); // 2 questions × 2 completed conversations
+      expect(projectStats.questionsWithProbing).toBe(5 * 2); // (2 questions + 3 follow-ups) × 2 completed conversations
     });
 
     it('should update parent statistics', async () => {
       await analytics.collectProjectStats('org1', 'ws1', mockProject);
 
       expect(analytics.stats.workspaces['ws1'].totalProjects).toBe(1);
-      expect(analytics.stats.workspaces['ws1'].totalConversations).toBe(3);
-      expect(analytics.stats.organizations['org1'].totalDigestedConversations).toBe(2);
+      expect(analytics.stats.workspaces['ws1'].totalConversations).toBe(4);
+      expect(analytics.stats.organizations['org1'].completedConversations).toBe(2);
+      expect(analytics.stats.organizations['org1'].abandonedConversations).toBe(1);
       expect(analytics.stats.summary.totalProjects).toBe(1);
     });
 
@@ -251,7 +264,7 @@ describe('UsageAnalytics', () => {
         if (url.includes('/conversations')) {
           return Promise.resolve(mockConversations);  // API returns data directly
         }
-        if (url.includes('/interview_questions')) {
+        if (url.includes('/projects/proj1')) {
           return Promise.reject(new Error('Not found'));
         }
         return Promise.reject(new Error('Unknown endpoint'));
@@ -279,7 +292,9 @@ describe('UsageAnalytics', () => {
         workspaces: ['ws1'],
         totalProjects: 0,
         totalConversations: 0,
-        totalDigestedConversations: 0,
+        completedConversations: 0,
+        abandonedConversations: 0,
+        inProgressConversations: 0,
         totalQuestions: 0,
         totalQuestionsWithProbing: 0
       };
@@ -292,7 +307,9 @@ describe('UsageAnalytics', () => {
         projects: [],
         totalProjects: 0,
         totalConversations: 0,
-        totalDigestedConversations: 0,
+        completedConversations: 0,
+        abandonedConversations: 0,
+        inProgressConversations: 0,
         totalQuestions: 0,
         totalQuestionsWithProbing: 0
       };
@@ -301,7 +318,7 @@ describe('UsageAnalytics', () => {
 
       const projectStats = analyticsWithDateRange.stats.projects['proj1'];
       expect(projectStats.conversations).toBe(1); // Only conv2 is in range
-      expect(projectStats.digestedConversations).toBe(1);
+      expect(projectStats.completedConversations).toBe(1);
     });
   });
 
@@ -317,7 +334,9 @@ describe('UsageAnalytics', () => {
           totalWorkspaces: 1,
           totalProjects: 1,
           totalConversations: 10,
-          totalDigestedConversations: 8,
+          completedConversations: 8,
+          abandonedConversations: 1,
+          inProgressConversations: 1,
           totalQuestions: 50,
           totalQuestionsWithProbing: 70
         },
@@ -328,7 +347,9 @@ describe('UsageAnalytics', () => {
             workspaces: ['ws1'],
             totalProjects: 1,
             totalConversations: 10,
-            totalDigestedConversations: 8,
+            completedConversations: 8,
+            abandonedConversations: 1,
+            inProgressConversations: 1,
             totalQuestions: 50,
             totalQuestionsWithProbing: 70
           }
@@ -342,7 +363,9 @@ describe('UsageAnalytics', () => {
             projects: ['proj1'],
             totalProjects: 1,
             totalConversations: 10,
-            totalDigestedConversations: 8,
+            completedConversations: 8,
+            abandonedConversations: 1,
+            inProgressConversations: 1,
             totalQuestions: 50,
             totalQuestionsWithProbing: 70
           }
@@ -357,7 +380,9 @@ describe('UsageAnalytics', () => {
             workspaceId: 'ws1',
             workspaceName: 'Test Workspace',
             conversations: 10,
-            digestedConversations: 8,
+            completedConversations: 8,
+            abandonedConversations: 1,
+            inProgressConversations: 1,
             questions: 50,
             questionsWithProbing: 70,
             createdAt: '2025-01-01',
@@ -410,13 +435,15 @@ describe('UsageAnalytics', () => {
           totalWorkspaces: 5,
           totalProjects: 10,
           totalConversations: 100,
-          totalDigestedConversations: 85,
+          completedConversations: 85,
+          abandonedConversations: 10,
+          inProgressConversations: 5,
           totalQuestions: 500,
           totalQuestionsWithProbing: 750
         },
         organizations: {
-          'org1': { name: 'Big Org', totalConversations: 80 },
-          'org2': { name: 'Small Org', totalConversations: 20 }
+          'org1': { name: 'Big Org', totalConversations: 80, completedConversations: 70 },
+          'org2': { name: 'Small Org', totalConversations: 20, completedConversations: 15 }
         }
       };
     });
@@ -437,8 +464,8 @@ describe('UsageAnalytics', () => {
       
       analytics.displaySummary();
 
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Big Org: 80 conversations'));
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Small Org: 20 conversations'));
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Big Org: 70 completed'));
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Small Org: 15 completed'));
     });
 
     it('should display filters when set', () => {
