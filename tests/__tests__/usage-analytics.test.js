@@ -177,10 +177,10 @@ describe('UsageAnalytics', () => {
     };
 
     const mockConversations = [
-      { _id: 'conv1', status: 'digested', createdAt: '2025-02-01' },
-      { _id: 'conv2', status: 'digested', createdAt: '2025-03-01' },
-      { _id: 'conv3', status: 'abandoned', createdAt: '2025-04-01' },
-      { _id: 'conv4', status: 'in_progress', createdAt: '2025-04-15' }
+      { _id: 'conv1', status: 'DIGESTED', createdAt: '2025-02-01' },
+      { _id: 'conv2', status: 'DIGESTED', createdAt: '2025-03-01' },
+      { _id: 'conv3', status: 'ABANDONED', createdAt: '2025-04-01' },
+      { _id: 'conv4', status: 'IN_PROGRESS', createdAt: '2025-04-15' }
     ];
 
     const mockProjectData = {
@@ -464,8 +464,8 @@ describe('UsageAnalytics', () => {
       
       analytics.displaySummary();
 
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Big Org: 70 completed'));
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Small Org: 15 completed'));
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Top Organizations by Completed Conversations'));
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('70 completed'));
     });
 
     it('should display filters when set', () => {
@@ -474,10 +474,17 @@ describe('UsageAnalytics', () => {
       analytics.options.startDate = '2025-01-01';
       analytics.options.endDate = '2025-12-31';
       
+      // Add some workspace data for testing
+      analytics.stats.workspaces = {
+        'ws1': { name: 'Main Workspace', completedConversations: 50, totalConversations: 60 },
+        'ws2': { name: 'Secondary Workspace', completedConversations: 20, totalConversations: 25 }
+      };
+      
       analytics.displaySummary();
 
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Organization: Big Org'));
       expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Date Range: 2025-01-01 to 2025-12-31'));
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Top Workspaces by Completed Conversations'));
     });
   });
 

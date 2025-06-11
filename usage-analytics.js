@@ -244,8 +244,9 @@ class UsageAnalytics {
         
         try {
             // Get conversations for this project
+            // Include incomplete conversations to get abandoned, in_progress, etc.
             const conversations = await this.api.get(
-                `/analyzer/results/${project._id}/conversations`
+                `/analyzer/results/${project._id}/conversations?includeIncompletes=true`
             );
             
             // Ensure conversations is an array
@@ -260,18 +261,47 @@ class UsageAnalytics {
             );
             
             // Count conversations by status
-            projectStats.completedConversations = filteredConversations.filter(
-                conv => conv.status === 'digested'
+            // API can return various status values - normalize to lowercase for comparison
+            const normalizedConversations = filteredConversations.map(conv => ({
+                ...conv,
+                normalizedStatus: (conv.status || '').toLowerCase()
+            }));
+            
+            // Completed: Only DIGESTED conversations are truly complete (analyzed and ready)
+            projectStats.completedConversations = normalizedConversations.filter(
+                conv => ['digested', 'summarized'].includes(conv.normalizedStatus)
             ).length;
-            projectStats.abandonedConversations = filteredConversations.filter(
-                conv => conv.status === 'abandoned'
+            
+            // Abandoned: ABANDONED, PRESCREENING_FAILED
+            projectStats.abandonedConversations = normalizedConversations.filter(
+                conv => ['abandoned', 'prescreening_failed'].includes(conv.normalizedStatus)
             ).length;
-            projectStats.inProgressConversations = filteredConversations.filter(
-                conv => conv.status === 'in_progress'
+            
+            // In Progress: Everything else that's not completed or abandoned
+            // Including: IN_PROGRESS, INITIATED, PRESCREENING, ANALYZING, DONE (not yet digested), TEST, SANDBOX, etc.
+            projectStats.inProgressConversations = normalizedConversations.filter(
+                conv => ['in_progress', 'initiated', 'prescreening', 'analyzing', 'done', 'test', 'sandbox', 'test_done', 'sandbox_done'].includes(conv.normalizedStatus)
             ).length;
-            projectStats.conversations = projectStats.completedConversations + 
-                                        projectStats.abandonedConversations + 
-                                        projectStats.inProgressConversations;
+            
+            // Total should include all conversations
+            projectStats.conversations = filteredConversations.length;
+            
+            // Debug: Log any conversations that weren't categorized
+            if (this.options.verbose) {
+                const categorizedCount = projectStats.completedConversations + 
+                                       projectStats.abandonedConversations + 
+                                       projectStats.inProgressConversations;
+                if (categorizedCount !== projectStats.conversations) {
+                    const uncategorized = normalizedConversations.filter(conv => 
+                        !['digested', 'summarized', 'done', 'test_done', 'sandbox_done',
+                          'abandoned', 'prescreening_failed',
+                          'in_progress', 'initiated', 'prescreening', 'analyzing', 'test', 'sandbox'].includes(conv.normalizedStatus)
+                    );
+                    if (uncategorized.length > 0) {
+                        this.log(`Project ${projectName}: Found ${uncategorized.length} uncategorized conversations with statuses: ${[...new Set(uncategorized.map(c => c.status))].join(', ')}`);
+                    }
+                }
+            }
             
             // Get project details with interview questions including follow_up_questions
             try {
@@ -545,7 +575,7 @@ class UsageAnalytics {
         console.log(chalk.blue('─'.repeat(60)));
         console.log(chalk.white(`Completed Conversations: ${chalk.bold(this.stats.summary.completedConversations)}`));
         console.log(chalk.white(`Abandoned Conversations: ${chalk.bold(this.stats.summary.abandonedConversations)}`));
-        console.log(chalk.white(`In Progress:             ${chalk.bold(this.stats.summary.inProgressConversations)}`));
+        console.log(chalk.white(`In Progress Conversations: ${chalk.bold(this.stats.summary.inProgressConversations)}`));
         console.log(chalk.white(`Total Conversations:     ${chalk.bold(this.stats.summary.totalConversations)}`));
         
         const completionRate = this.stats.summary.totalConversations > 0 ?
@@ -558,17 +588,44 @@ class UsageAnalytics {
         
         console.log(chalk.blue('═'.repeat(60)) + '\n');
         
-        // Top organizations by conversations
-        console.log(chalk.yellow.bold('🏆 Top Organizations by Completed Conversations:'));
-        const topOrgs = Object.values(this.stats.organizations)
-            .sort((a, b) => b.completedConversations - a.completedConversations)
-            .slice(0, 5);
-        
-        topOrgs.forEach((org, index) => {
-            const rate = org.totalConversations > 0 ? 
-                ((org.completedConversations / org.totalConversations) * 100).toFixed(1) : '0.0';
-            console.log(`   ${index + 1}. ${org.name}: ${org.completedConversations} completed (${rate}% completion rate)`);
-        });
+        // Show top organizations or workspaces depending on filter
+        if (this.options.organizationId) {
+            // When filtered by organization, show top workspaces
+            console.log(chalk.yellow.bold('🏆 Top Workspaces by Completed Conversations:'));
+            const topWorkspaces = Object.values(this.stats.workspaces)
+                .sort((a, b) => b.completedConversations - a.completedConversations)
+                .slice(0, 5);
+            
+            topWorkspaces.forEach((ws, index) => {
+                const rate = ws.totalConversations > 0 ? 
+                    ((ws.completedConversations / ws.totalConversations) * 100).toFixed(1) : '0.0';
+                console.log(`   ${index + 1}. ${ws.name}: ${ws.completedConversations} completed (${rate}% completion rate)`);
+            });
+        } else if (this.options.workspaceId) {
+            // When filtered by workspace, show top projects
+            console.log(chalk.yellow.bold('🏆 Top Projects by Completed Conversations:'));
+            const topProjects = Object.values(this.stats.projects)
+                .sort((a, b) => b.completedConversations - a.completedConversations)
+                .slice(0, 5);
+            
+            topProjects.forEach((proj, index) => {
+                const rate = proj.conversations > 0 ? 
+                    ((proj.completedConversations / proj.conversations) * 100).toFixed(1) : '0.0';
+                console.log(`   ${index + 1}. ${proj.name}: ${proj.completedConversations} completed (${rate}% completion rate)`);
+            });
+        } else {
+            // No filter - show top organizations
+            console.log(chalk.yellow.bold('🏆 Top Organizations by Completed Conversations:'));
+            const topOrgs = Object.values(this.stats.organizations)
+                .sort((a, b) => b.completedConversations - a.completedConversations)
+                .slice(0, 5);
+            
+            topOrgs.forEach((org, index) => {
+                const rate = org.totalConversations > 0 ? 
+                    ((org.completedConversations / org.totalConversations) * 100).toFixed(1) : '0.0';
+                console.log(`   ${index + 1}. ${org.name}: ${org.completedConversations} completed (${rate}% completion rate)`);
+            });
+        }
         
         console.log('');
     }

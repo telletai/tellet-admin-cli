@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Now correctly fetches `follow_up_question` data from dashboard API endpoint instead of analyzer endpoint
   - Fixed string concatenation issue by properly parsing follow-up question counts as integers
   - Total questions with probing now shows accurate count: (base questions + follow-up questions) × completed conversations
+- **Usage Analytics**: Fixed conversation status tracking
+  - Added `includeIncompletes=true` parameter to include abandoned and in-progress conversations
+  - Corrected status categorization: only DIGESTED conversations are truly "completed"
+  - DONE status conversations are now categorized as "in progress" (completed but not yet analyzed)
 
 ### 📊 Enhanced
 - **Usage Analytics**: Improved conversation statistics reporting
